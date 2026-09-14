@@ -1,0 +1,200 @@
+---
+import WhatsAppBtnPopup from './WhatsAppBtnPopup.astro';
+---
+
+<section class="advisor-banner">
+  <div class="banner-container">
+    <div class="content-wrapper">
+      <h2 class="animate-text">¿Necesitas ayuda con tu vehículo?</h2>
+      <p class="animate-text-delay">Nuestros expertos están listos para asesorarte</p>
+      <WhatsAppBtnPopup text="Contactar Asesor" position="left" />
+    </div>
+    <div class="advisor-image">
+      <img src="/images/advisor.webp" alt="Asesor profesional" />
+    </div>
+    <div class="animated-shapes">
+      <div class="shape shape-1"></div>
+      <div class="shape shape-2"></div>
+      <div class="shape shape-3"></div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .advisor-banner {
+    position: relative;
+    z-index: 1;
+    bottom: -50px;
+    width: 94vw;
+    max-width: var(--max-width);
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    margin: 0 auto;
+    overflow: hidden;
+    border-radius: 8px;
+    position: relative;
+  }
+
+  .banner-container {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1.2fr 0.8fr;
+    align-items: center;
+    gap: 2rem;
+    position: relative;
+    padding: 0 4rem;
+  }
+
+  .content-wrapper {
+    color: white;
+    z-index: 2;
+    padding: 0 0 2.5rem 0;
+  }
+
+  .animate-text {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeInUp 0.2s ease forwards;
+  }
+
+  .animate-text-delay {
+    font-size: 1.2rem;
+    margin-bottom: 2rem;
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeInUp 0.2s ease 0.2s forwards;
+  }
+
+  .cta-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--primary-color);
+    color: white;
+    padding: 1rem 2rem;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeInUp 0.2s ease 0.4s forwards;
+  }
+
+  .cta-button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 20px rgba(37, 51, 211, 0.3);
+  }
+
+  .advisor-image {
+    position: relative;
+    z-index: 1;
+  }
+
+  .advisor-image img {
+    width: 100%;
+    height: auto;
+    position: relative;
+    bottom: -30px;
+  }
+
+  .animated-shapes {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+  }
+
+  .shape {
+    position: absolute;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+  }
+
+  .shape-1 {
+    width: 100px;
+    height: 100px;
+    top: -20px;
+    left: 10%;
+    animation: float 8s ease-in-out infinite;
+  }
+
+  .shape-2 {
+    width: 150px;
+    height: 150px;
+    top: 40px;
+    right: 10%;
+    animation: float 6s ease-in-out infinite;
+  }
+
+  .shape-3 {
+    width: 70px;
+    height: 70px;
+    top: 40%;
+    right: 50%;
+    animation: float 7s ease-in-out infinite;
+  }
+
+  @keyframes fadeInUp {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-20px);
+    }
+  }
+
+  @keyframes floatImage {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+
+  @media (max-width: 968px) {
+    
+    .advisor-banner {
+      background: linear-gradient(180deg, var(--primary-color) 40%, var(--secondary-color) 100%);
+    }
+    .banner-container {
+      grid-template-columns: 1fr;
+      text-align: center;
+    }
+    
+
+    .advisor-image {
+      order: -1;
+      max-width: 300px;
+      margin: 0 auto;
+    }
+    
+    .advisor-image img {
+    mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
+    }
+
+    .animate-text {
+      font-size: 2rem;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .animate-text {
+      font-size: 1.8rem;
+    }
+
+    .advisor-image {
+      max-width: 250px;
+    }
+  }
+</style>

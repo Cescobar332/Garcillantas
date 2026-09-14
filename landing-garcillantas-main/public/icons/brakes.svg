@@ -1,0 +1,13 @@
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Rueda y disco de freno -->
+  <circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.5"/>
+  <circle cx="12" cy="12" r="6" stroke="currentColor" stroke-width="1.5"/>
+  <circle cx="12" cy="12" r="2" stroke="currentColor" stroke-width="1.5"/>
+  <!-- Ranuras del disco -->
+  <path d="M12 6V18" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-dasharray="2 2"/>
+  <path d="M6 12H18" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-dasharray="2 2"/>
+  <!-- Cáliper de freno -->
+  <path d="M4 9C4 8.44772 4.44772 8 5 8H7C7.55228 8 8 8.44772 8 9V15C8 15.5523 7.55228 16 7 16H5C4.44772 16 4 15.5523 4 15V9Z" stroke="currentColor" stroke-width="1.5"/>
+  <path d="M5 11H7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+  <path d="M5 13H7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+</svg>

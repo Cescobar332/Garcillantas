@@ -1,0 +1,215 @@
+---
+import { getAllPromotions } from '../lib/contentful';
+import { documentToHtmlString } from '@contentful/rich-text-html-renderer';
+import Button from './Button.astro';
+
+const promotions = await getAllPromotions();
+
+if (!promotions || promotions.length === 0) {
+  return null;
+}
+
+---
+
+<section class="promotions-section">
+  <div class="container">
+    <h2 class="section-title">
+      Nuestras promociones y descuentos
+    </h2>
+    <p class="subtitle"> Conoce y difruta de nuestras promociones de martes a viernes.</p>
+    <div class="promotions-grid">
+        
+      {promotions.map((promotion) => (
+        <article class="promotion-card">
+          {promotion.fields.image && (
+            <div class="image-container">
+                {promotion.fields.title.id}
+              <img
+                src={promotion?.fields?.image?.fields?.file?.url || ''}
+                alt={promotion.fields.title}
+                class="promotion-image"
+              />
+            </div>
+          )}
+          <div class="promotion-content">
+            <h3 class="promotion-title">{promotion.fields.title}</h3>
+            <div class="promotion-description" set:html={documentToHtmlString(promotion.fields.description)} />
+            <Button 
+              href={`https://wa.me/573174406744?text=Hola, estoy interesado en la promoción: ${promotion.fields.title}`}
+              variant="primary" 
+              icon="whatsapp"
+            >
+              Consultar Promoción
+            </Button>
+          </div>
+        </article>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  .promotions-section {
+    padding: 6rem 0;
+    background: rgba(255, 255, 255, 0.6);
+    display: flex;
+    align-items: center;
+  }
+
+  .container {
+    width: var(--max-width);
+    margin: 0 auto;
+    padding: 0 1rem;
+  }
+
+  .section-title {
+    font-size: 3rem;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 0.5rem;
+    color: var(--primary-color);
+    position: relative;
+    display: inline-block;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: var(--font-family-display);
+    text-transform: uppercase;
+  }
+
+  .subtitle {
+    text-align: center;
+    color: white;
+    font-size: 1.2rem;
+    margin-bottom: 4rem;
+    opacity: 0.9;
+  }
+
+  .title-underline {
+    position: absolute;
+    bottom: -10px;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: var(--primary-color);
+    transform: scaleX(0);
+    transition: transform 0.3s;
+  }
+
+  .section-title:hover .title-underline {
+    transform: scaleX(1);
+  }
+
+  .promotions-grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 2rem;
+  }
+
+  .promotion-card {
+    background: #ffffff;
+    border-radius: 1rem;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+  }
+
+  .promotion-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  }
+
+  .image-container {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .promotion-image {
+    width: 100%;
+    height: 100%;
+    object-fit: fill;
+    object-position: center;
+  }
+
+  .promotion-content {
+    padding: 2rem;
+    background: linear-gradient(to bottom right, #ffffff, #f9fafb);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-sizing: border-box;
+  }
+
+  .promotion-title {
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-bottom: 1rem;
+    color: var(--primary-color);
+    transition: color 0.3s;
+  }
+
+  .promotion-title:hover {
+    color: var(--primary-color);
+  }
+
+  .promotion-description {
+    color: #4a5568;
+    line-height: 1.8;
+    margin-bottom: 1.5rem;
+  }
+
+  .whatsapp-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 1rem;
+    background: #25D366;
+    color: white;
+    border-radius: 0.75rem;
+    font-weight: bold;
+    transition: all 0.3s;
+    text-decoration: none;
+    margin-top: auto;
+  }
+
+  .whatsapp-button:hover {
+    background: #128C7E;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(37, 211, 102, 0.3);
+  }
+
+  .whatsapp-button svg {
+    width: 24px;
+    height: 24px;
+    margin-right: 0.75rem;
+  }
+
+  @media (max-width: 768px) {
+    .section-title {
+      font-size: 2rem;
+    }
+
+    .promotions-grid {
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+
+    .promotion-card {
+      flex-direction: column;
+      height: auto;
+    }
+
+    .image-container {
+      flex: 0 0 auto;
+    }
+
+    .promotion-content {
+      flex: 1;
+    }
+  }
+</style>

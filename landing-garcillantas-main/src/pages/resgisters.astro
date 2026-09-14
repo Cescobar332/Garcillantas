@@ -1,0 +1,23 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { db, Registrations } from 'astro:db';
+
+const registrations = await db.select().from(Registrations);
+---
+
+<Layout>
+  <h2>Registros</h2>
+
+  <button id="download-excel">Descargar en Excel</button>
+
+  {
+    registrations.map(({ fullName, email, phone, registrationDate }) => (
+      <article>
+        <p>Nombre: {fullName}</p>
+        <p>Correo: {email}</p>
+        <p>Teléfono: {phone}</p>
+        <p>Fecha: {registrationDate}</p>
+      </article>
+    ))
+  }
+</Layout>

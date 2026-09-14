@@ -1,0 +1,602 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import WhatsAppBtnPopup from '@/components/WhatsAppBtnPopup.astro';
+import { getAllProducts, type Product } from '@/lib/contentful';
+
+const title = 'Catálogo de Productos | Garcillantas';
+const description = 'Explora nuestro catálogo de productos y variantes desde Contentful.';
+
+const products = await getAllProducts();
+
+const allBrands = Array.from(new Set(
+  products.flatMap((p: Product) => Array.isArray(p.fields.brand) ? p.fields.brand : [p.fields.brand])
+)).sort();
+
+const allRims = Array.from(new Set(
+  products.flatMap((p: Product) => (p.fields.variants ?? []).map(v => v.fields.rimSize))
+)).filter((v): v is number => typeof v === 'number').sort((a, b) => a - b);
+
+const allWidths = Array.from(new Set(
+  products.flatMap((p: Product) => (p.fields.variants ?? []).map(v => v.fields.width))
+)).filter((v): v is number => typeof v === 'number').sort((a, b) => a - b);
+
+const allTypes = Array.from(new Set(
+  products.flatMap((p: Product) => (p.fields.variants ?? [])
+    .flatMap(v => Array.isArray(v.fields.tireType) ? v.fields.tireType : (v.fields.tireType ? [v.fields.tireType] : [])))
+)).sort();
+
+const allSeasons = Array.from(new Set(
+  products.flatMap((p: Product) => (p.fields.variants ?? [])
+    .flatMap(v => Array.isArray(v.fields.seasonUsage) ? v.fields.seasonUsage : (v.fields.seasonUsage ? [v.fields.seasonUsage] : [])))
+)).sort();
+---
+
+<Layout title={title} description={description}>
+  <section class="catalog-section">
+    <div class="catalog-header">
+      <div class="header-content">
+        <h1>Catálogo de Productos</h1>
+        <p class="description">Encuentra la llanta perfecta para tu vehículo</p>
+        <p class="results" id="results-count"></p>
+      </div>
+    </div>
+
+    <div class="filters-wrapper">
+      <div class="filters-grid">
+        <div class="filter-group filter-search">
+          <label for="filter-search">Buscar</label>
+          <input id="filter-search" type="text" placeholder="Nombre, marca, modelo, medida..." />
+        </div>
+
+        <div class="filter-group">
+          <label for="filter-brand">Marca</label>
+          <select id="filter-brand">
+            <option value="">Todas</option>
+            {allBrands.map((brand) => (
+              <option value={brand}>{brand}</option>
+            ))}
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label for="filter-rim">Rin</label>
+          <select id="filter-rim">
+            <option value="">Todos</option>
+            {allRims.map((rim) => (
+              <option value={rim.toString()}>{rim}</option>
+            ))}
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label for="filter-width">Ancho</label>
+          <select id="filter-width">
+            <option value="">Todos</option>
+            {allWidths.map((w) => (
+              <option value={w.toString()}>{w}</option>
+            ))}
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label for="filter-type">Tipo</label>
+          <select id="filter-type">
+            <option value="">Todos</option>
+            {allTypes.map((t) => (
+              <option value={t}>{t}</option>
+            ))}
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label for="filter-season">Temporada / uso</label>
+          <select id="filter-season">
+            <option value="">Todas</option>
+            {allSeasons.map((s) => (
+              <option value={s}>{s}</option>
+            ))}
+          </select>
+        </div>
+
+        <div class="filter-group filter-price">
+          <label>Precio (COP)</label>
+          <div class="price-inputs">
+            <input id="filter-price-min" type="number" placeholder="Mín" min="0" />
+            <span>-</span>
+            <input id="filter-price-max" type="number" placeholder="Máx" min="0" />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="catalog-grid">
+      {products.map((product: Product) => {
+        const variants = product.fields.variants ?? [];
+        const prices = variants
+          .map(v => v.fields.price)
+          .filter((p): p is number => typeof p === 'number');
+        const minPrice = prices.length ? Math.min(...prices) : null;
+        const maxPrice = prices.length ? Math.max(...prices) : null;
+
+        const brandLabel = Array.isArray(product.fields.brand)
+          ? product.fields.brand.join(', ')
+          : product.fields.brand;
+
+        const categoryLabel = Array.isArray(product.fields.category)
+          ? product.fields.category.join(', ')
+          : product.fields.category;
+
+        const mainImage = Array.isArray(product.fields.mainImage)
+          ? product.fields.mainImage[0]
+          : product.fields.mainImage;
+
+        const rims = Array.from(new Set(
+          variants
+            .map(v => v.fields.rimSize)
+            .filter((r): r is number => typeof r === 'number')
+        ));
+
+        const widths = Array.from(new Set(
+          variants
+            .map(v => v.fields.width)
+            .filter((w): w is number => typeof w === 'number')
+        ));
+
+        const types = Array.from(new Set(
+          variants.flatMap(v =>
+            Array.isArray(v.fields.tireType)
+              ? v.fields.tireType
+              : (v.fields.tireType ? [v.fields.tireType] : [])
+          )
+        ));
+
+        const seasons = Array.from(new Set(
+          variants.flatMap(v =>
+            Array.isArray(v.fields.seasonUsage)
+              ? v.fields.seasonUsage
+              : (v.fields.seasonUsage ? [v.fields.seasonUsage] : [])
+          )
+        ));
+
+        return (
+          <div
+            class="product-card"
+            data-slug={product.fields.slug}
+            data-name={product.fields.productName.toLowerCase()}
+            data-brand={brandLabel.toLowerCase()}
+            data-model={product.fields.model.toLowerCase()}
+            data-category={categoryLabel.toLowerCase()}
+            data-rims={rims.join(',')}
+            data-widths={widths.join(',')}
+            data-types={types.map(t => t.toLowerCase()).join(',')}
+            data-seasons={seasons.map(s => s.toLowerCase()).join(',')}
+            data-min-price={minPrice !== null ? minPrice : ''}
+            data-max-price={maxPrice !== null ? maxPrice : ''}
+          >
+            <a href={`/catalogo/${product.fields.slug}`} class="product-link">
+              <div class="image-wrapper">
+                <img
+                  src={mainImage?.fields.file.url}
+                  alt={product.fields.productName}
+                  loading="lazy"
+                />
+                {product.fields.isFeatured && (
+                  <span class="badge-featured">Destacado</span>
+                )}
+              </div>
+              <div class="product-info">
+                <h2>{product.fields.productName}</h2>
+                <p class="brand">{brandLabel} · {product.fields.model}</p>
+                <p class="category">{categoryLabel}</p>
+                {minPrice !== null && (
+                  <p class="price">
+                    {maxPrice && maxPrice !== minPrice
+                      ? `Desde $${minPrice.toLocaleString('es-CO')} hasta $${maxPrice.toLocaleString('es-CO')}`
+                      : `Precio: $${minPrice.toLocaleString('es-CO')}`}
+                  </p>
+                )}
+              </div>
+            </a>
+            <div class="product-actions">
+              <WhatsAppBtnPopup
+                text="Contactar un asesor"
+                message={`Hola, estoy interesado en ${product.fields.productName}`}
+                position="left"
+                variant="primary"
+              />
+            </div>
+          </div>
+        );
+      })}
+
+      {products.length === 0 && (
+        <p class="empty">No hay productos configurados aún en Contentful.</p>
+      )}
+    </div>
+  </section>
+</Layout>
+
+<script type="module">
+  const searchInput = document.querySelector<HTMLInputElement>('#filter-search');
+  const brandSelect = document.querySelector<HTMLSelectElement>('#filter-brand');
+  const rimSelect = document.querySelector<HTMLSelectElement>('#filter-rim');
+  const widthSelect = document.querySelector<HTMLSelectElement>('#filter-width');
+  const typeSelect = document.querySelector<HTMLSelectElement>('#filter-type');
+  const seasonSelect = document.querySelector<HTMLSelectElement>('#filter-season');
+  const priceMinInput = document.querySelector<HTMLInputElement>('#filter-price-min');
+  const priceMaxInput = document.querySelector<HTMLInputElement>('#filter-price-max');
+
+  const cards = Array.from(document.querySelectorAll<HTMLAnchorElement>('.product-card'));
+  const resultsCount = document.querySelector<HTMLParagraphElement>('#results-count');
+  const totalProducts = cards.length;
+
+  function applyFilters() {
+    const term = (searchInput?.value || '').toLowerCase().trim();
+    const brand = (brandSelect?.value || '').toLowerCase();
+    const rim = rimSelect?.value || '';
+    const width = widthSelect?.value || '';
+    const type = (typeSelect?.value || '').toLowerCase();
+    const season = (seasonSelect?.value || '').toLowerCase();
+    const minPrice = priceMinInput?.value ? Number(priceMinInput.value) : null;
+    const maxPrice = priceMaxInput?.value ? Number(priceMaxInput.value) : null;
+
+    let visibleCount = 0;
+
+    cards.forEach(card => {
+      const name = (card.dataset.name || '').toLowerCase();
+      const cardBrand = (card.dataset.brand || '').toLowerCase();
+      const model = (card.dataset.model || '').toLowerCase();
+      const category = (card.dataset.category || '').toLowerCase();
+      const rims = (card.dataset.rims || '').split(',').filter(Boolean);
+      const widths = (card.dataset.widths || '').split(',').filter(Boolean);
+      const types = (card.dataset.types || '').split(',').filter(Boolean);
+      const seasons = (card.dataset.seasons || '').split(',').filter(Boolean);
+      const cardMinPrice = card.dataset.minPrice ? Number(card.dataset.minPrice) : null;
+      const cardMaxPrice = card.dataset.maxPrice ? Number(card.dataset.maxPrice) : null;
+
+      let ok = true;
+
+      if (term) {
+        const haystack = [name, cardBrand, model, category, rims.join(' '), widths.join(' '), types.join(' '), seasons.join(' ')].join(' ');
+        if (!haystack.includes(term)) ok = false;
+      }
+
+      if (ok && brand && !cardBrand.includes(brand)) ok = false;
+
+      if (ok && rim) {
+        if (!rims.includes(rim)) ok = false;
+      }
+
+      if (ok && width) {
+        if (!widths.includes(width)) ok = false;
+      }
+
+      if (ok && type) {
+        const lowerTypes = types.map(t => t.toLowerCase());
+        if (!lowerTypes.includes(type)) ok = false;
+      }
+
+      if (ok && season) {
+        const lowerSeasons = seasons.map(s => s.toLowerCase());
+        if (!lowerSeasons.includes(season)) ok = false;
+      }
+
+      if (ok && (minPrice !== null || maxPrice !== null)) {
+        const productMin = cardMinPrice ?? 0;
+        const productMax = cardMaxPrice ?? cardMinPrice ?? 0;
+
+        if (minPrice !== null && productMax < minPrice) ok = false;
+        if (maxPrice !== null && productMin > maxPrice) ok = false;
+      }
+
+      card.style.display = ok ? '' : 'none';
+      if (ok) visibleCount++;
+    });
+
+    if (resultsCount) {
+      if (visibleCount === 0) {
+        resultsCount.textContent = 'No se encontraron productos para los filtros seleccionados.';
+      } else if (visibleCount === totalProducts) {
+        resultsCount.textContent = `Mostrando ${visibleCount} producto${visibleCount === 1 ? '' : 's'}`;
+      } else {
+        resultsCount.textContent = `Mostrando ${visibleCount} de ${totalProducts} productos`;
+      }
+    }
+  }
+
+  [
+    searchInput,
+    brandSelect,
+    rimSelect,
+    widthSelect,
+    typeSelect,
+    seasonSelect,
+    priceMinInput,
+    priceMaxInput,
+  ].forEach(el => {
+    if (!el) return;
+    const evt = el instanceof HTMLInputElement ? 'input' : 'change';
+    el.addEventListener(evt, applyFilters);
+  });
+
+  applyFilters();
+</script>
+
+<style>
+  .catalog-section {
+    padding: 0 0 3rem;
+    width: 100%;
+    background: radial-gradient(circle at top, rgba(255, 221, 0, 0.15), transparent 55%), #f5f6fb;
+  }
+
+  .catalog-header {
+    background: transparent;
+    padding: 2.5rem 1rem 1rem;
+    text-align: center;
+    width: 100%;
+  }
+
+  .header-content {
+    width: 100%;
+    max-width: var(--max-width);
+    margin: 0 auto;
+    padding: 0 1rem;
+  }
+
+  h1 {
+    font-size: clamp(2.2rem, 4.5vw, 3.1rem);
+    margin-bottom: 0.5rem;
+    font-family: var(--font-family);
+    letter-spacing: 0.02em;
+    color: var(--primary-color);
+  }
+
+  .description {
+    font-size: clamp(1rem, 3vw, 1.1rem);
+    opacity: 0.9;
+    max-width: 640px;
+    margin: 0 auto;
+    color: var(--color-text);
+  }
+
+  .results {
+    margin-top: 0.9rem;
+    font-size: 0.9rem;
+    opacity: 0.85;
+    color: #555;
+  }
+
+  .filters-wrapper {
+    position: sticky;
+    top: 70px;
+    z-index: 20;
+    max-width: var(--max-width);
+    margin: 1.25rem auto 0;
+    padding: 0 1rem;
+  }
+
+  .filters-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 0.9rem 1.1rem;
+    align-items: flex-end;
+    padding: 1rem 1.25rem 1.25rem;
+    background: rgba(255, 255, 255, 0.92);
+    border-radius: 1rem;
+    box-shadow: 0 14px 40px rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(13, 75, 160, 0.06);
+    backdrop-filter: blur(10px);
+  }
+
+  .filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+
+  .filter-group label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #6b7280;
+  }
+
+  .filter-group input,
+  .filter-group select {
+    padding: 0.55rem 0.9rem;
+    border-radius: 999px;
+    border: 1px solid #e5e7eb;
+    font-size: 0.9rem;
+    outline: none;
+    background: #f9fafb;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease, transform 0.1s ease;
+  }
+
+  .filter-group input::placeholder {
+    color: #9ca3af;
+  }
+
+  .filter-group input:focus,
+  .filter-group select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(13, 75, 160, 0.15);
+    background: #ffffff;
+    transform: translateY(-1px);
+  }
+
+  .filter-group select {
+    cursor: pointer;
+  }
+
+  .filter-price .price-inputs {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .filter-price input {
+    width: 100%;
+  }
+
+  .filter-price span {
+    font-size: 0.8rem;
+    color: #6b7280;
+  }
+
+  .filter-search {
+    grid-column: 1 / -1;
+  }
+
+  .product-link {
+    display: block;
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .catalog-grid {
+    max-width: var(--max-width);
+    margin: 2.2rem auto 0;
+    padding: 0 1.25rem 2.5rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1.9rem;
+  }
+
+  .product-card {
+    display: flex;
+    flex-direction: column;
+    background: #ffffff;
+    border-radius: 1rem;
+    box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
+    overflow: hidden;
+    color: inherit;
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, translate 0.18s ease;
+  }
+
+  .product-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 55px rgba(15, 23, 42, 0.18);
+    border-color: rgba(13, 75, 160, 0.45);
+  }
+
+  .image-wrapper {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    background: linear-gradient(135deg, #f5f5f5, #e5e7eb);
+    position: relative;
+  }
+
+  .image-wrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+    padding: 0.8rem 0.5rem 0.5rem;
+    transform: scale(1);
+    transition: transform 0.25s ease;
+  }
+
+  .product-card:hover .image-wrapper img {
+    transform: scale(1.04);
+  }
+
+  .product-info {
+    padding: 1.1rem 1.25rem 1.15rem;
+  }
+
+  .product-info h2 {
+    font-size: 1.05rem;
+    margin: 0 0 0.5rem;
+    color: #111827;
+  }
+
+  .brand {
+    font-size: 0.9rem;
+    color: #4b5563;
+    margin: 0 0 0.25rem;
+  }
+
+  .category {
+    font-size: 0.85rem;
+    color: #6b7280;
+    margin: 0 0 0.6rem;
+  }
+
+  .price {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--primary-color);
+  }
+
+  .product-actions {
+    padding: 0 1.25rem 1.15rem;
+  }
+
+  .badge-featured {
+    position: absolute;
+    top: 0.75rem;
+    left: 0.75rem;
+    background: linear-gradient(135deg, #111827, #1f2937);
+    color: #fff;
+    padding: 0.2rem 0.7rem;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .empty {
+    grid-column: 1 / -1;
+    text-align: center;
+    color: #6b7280;
+  }
+
+  @media (max-width: 1024px) {
+    .filters-grid {
+      padding-inline: 1rem;
+    }
+
+    .catalog-grid {
+      padding-inline: 1rem;
+      gap: 1.5rem;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .catalog-header {
+      padding-top: 2rem;
+    }
+
+    .header-content {
+      padding-inline: 0.5rem;
+    }
+
+    .filters-wrapper {
+      top: 60px;
+    }
+
+    .filters-grid {
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem 0.85rem;
+    }
+
+    .filter-search {
+      grid-column: 1 / -1;
+    }
+  }
+
+  @media (max-width: 540px) {
+    .filters-grid {
+      grid-template-columns: 1fr;
+      padding-inline: 0.9rem;
+    }
+
+    .catalog-grid {
+      padding-inline: 0.9rem;
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

@@ -1,0 +1,113 @@
+---
+import BGVideo from '../components/BGVideo.astro';
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="404: Página no encontrada - Garcillantas" description="Lo sentimos, la página que buscas no existe.">
+    <BGVideo />
+  <section class="error-container">
+    <div class="error-content">
+      <h1>404</h1>
+      <h2>¡Oops! Página no encontrada</h2>
+      <p>Lo sentimos, la página que estás buscando no existe o ha sido movida.</p>
+      <div class="error-actions">
+        <a href="/" class="primary-button">Volver al Inicio</a>
+        <a href="/servicios" class="secondary-button">Ver Servicios</a>
+      </div>
+    </div>
+  </section>
+</Layout>
+
+<style>
+  .error-container {
+    min-height: calc(100vh - 300px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-xl) var(--spacing-md);
+    text-align: center;
+    background: linear-gradient(to bottom, var(--color-background) 0%, var(--color-background-alt) 100%);
+  }
+
+  .error-content {
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  h1 {
+    font-size: 8rem;
+    font-weight: bold;
+    color: #ffffff;
+    margin: 0;
+    line-height: 1;
+    font-family: var(--font-family-special);
+  }
+
+  h2 {
+    font-size: 2rem;
+    color: var(--secondary-color);
+    margin: 1rem 0;
+  }
+
+  p {
+    font-size: 1.2rem;
+    color: #ffffff;
+    margin-bottom: 2rem;
+  }
+
+  .error-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .primary-button,
+  .secondary-button {
+    padding: 0.8rem 1.5rem;
+    border-radius: 4px;
+    text-decoration: none;
+    font-weight: bold;
+    transition: all 0.3s ease;
+  }
+
+  .primary-button {
+    background-color: var(--primary-color);
+    color: white;
+  }
+
+  .primary-button:hover {
+    background-color: var(--secondary-color);
+    transform: translateY(-2px);
+  }
+
+  .secondary-button {
+    background-color: transparent;
+    color: var(--primary-color);
+    border: 2px solid var(--primary-color);
+  }
+
+  .secondary-button:hover {
+    background-color: var(--primary-color);
+    color: white;
+    transform: translateY(-2px);
+  }
+
+  @media (max-width: 768px) {
+    .error-container {
+      padding: var(--spacing-lg) var(--spacing-md);
+    }
+
+    h1 {
+      font-size: 6rem;
+    }
+
+    h2 {
+      font-size: 1.5rem;
+    }
+
+    p {
+      font-size: 1rem;
+    }
+  }
+</style>

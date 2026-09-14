@@ -1,0 +1,158 @@
+---
+const targetDate = new Date('2025-04-30T00:00:00'); // Ajusta esta fecha según tus necesidades
+---
+<section class="coming-soon">
+  <h1>Muy pronto, en Garcillantas, te ofreceremos una experiencia renovada.</h1>
+  
+  <div class="text-content">
+    <p>Con mejores servicios, mayor comodidad y todo lo que necesitas para tu vehículo.</p>
+  </div>
+  
+<div class="countdown-container">
+  <div class="countdown">
+    <div class="time-block">
+      <span id="days">00</span>
+      <span class="label">Días</span>
+    </div>
+    <div class="time-block">
+      <span id="hours">00</span>
+      <span class="label">Horas</span>
+    </div>
+    <div class="time-block">
+      <span id="minutes">00</span>
+      <span class="label">Minutos</span>
+    </div>
+    <div class="time-block">
+      <span id="seconds">00</span>
+      <span class="label">Segundos</span>
+    </div>
+  </div>
+</div>
+</section>
+<style>
+  .coming-soon{
+    max-width: var(--max-width);
+    margin: 2rem auto;
+  }
+  h1 {
+    font-size: 3rem;
+    margin-bottom: 2rem;
+    color:var(--secondary-color);
+    text-wrap: pretty;
+    text-align: center;
+  }
+  .text-content{
+    margin: 0 15rem;
+    text-align: center;
+  }
+  p{
+    color: #ffffff;
+    font-size: 1.25rem;
+    line-height: 1.6;
+    text-wrap: pretty;
+    text-align: center;
+  }
+  .countdown-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: var(--spacing-md);
+  }
+
+  .countdown {
+    display: flex;
+    gap: 2rem;
+  }
+
+  .time-block {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: var(--primary-color);
+    padding: 1rem;
+    border-radius: 8px;
+    min-width: 100px;
+  }
+
+  .time-block span:first-child {
+    font-size: 3rem;
+    font-weight: bold;
+    color: #ffffff;
+  }
+
+  .label {
+    font-size: 1rem;
+    color: var(--secondary-color);
+    margin-top: 0.5rem;
+  }
+
+  @media (max-width: 768px) {
+    .text-content{
+      margin: 0 2rem;
+    }
+    .countdown {
+      gap: 1rem;
+    }
+
+    .time-block {
+      min-width: 70px;
+      padding: 0.8rem;
+    }
+
+    .time-block span:first-child {
+      font-size: 2rem;
+    }
+
+    .label {
+      font-size: 0.8rem;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .countdown {
+      gap: 0.5rem;
+    }
+
+    .time-block {
+      min-width: 60px;
+      padding: 0.6rem;
+    }
+
+    .time-block span:first-child {
+      font-size: 1.5rem;
+    }
+
+    .label {
+      font-size: 0.7rem;
+    }
+  }
+</style>
+
+<script>
+function updateCountdown() {
+  const targetDate = new Date('2025-04-30T00:00:00');
+  const now = new Date();
+  const diff = targetDate.getTime() - now.getTime();
+
+  if (diff <= 0) {
+    document.getElementById('days').textContent = '00';
+    document.getElementById('hours').textContent = '00';
+    document.getElementById('minutes').textContent = '00';
+    document.getElementById('seconds').textContent = '00';
+    return;
+  }
+
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+  const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+  document.getElementById('days').textContent = days.toString().padStart(2, '0');
+  document.getElementById('hours').textContent = hours.toString().padStart(2, '0');
+  document.getElementById('minutes').textContent = minutes.toString().padStart(2, '0');
+  document.getElementById('seconds').textContent = seconds.toString().padStart(2, '0');
+}
+
+setInterval(updateCountdown, 1000);
+updateCountdown();
+</script>

@@ -1,0 +1,40 @@
+# robots.txt for Garcillantas
+
+# Allow all robots complete access
+User-agent: *
+Allow: /
+Allow: /blog/
+Allow: /productos/
+Allow: /servicios/
+Allow: /contacto/
+Allow: /promociones/
+
+# Block access to specific folders
+Disallow: /admin/
+Disallow: /private/
+Disallow: /temp/
+Disallow: /*.json$
+Disallow: /*?*sort=
+Disallow: /*?*filter=
+
+# Block archive duplicates
+Disallow: */feed/
+Disallow: */trackback/
+Disallow: */page/
+Disallow: /*?replytocom
+
+# Crawl delays and limits
+Crawl-delay: 10
+
+# Sitemap location
+Sitemap: https://garcillantas.com/sitemap.xml
+
+# Additional rules for specific bots
+User-agent: GPTBot
+Disallow: /
+
+User-agent: ChatGPT-User
+Disallow: /
+
+User-agent: Google-Extended
+Allow: /

@@ -1,0 +1,401 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import StationMap from '../../components/StationMap.astro';
+import { getServiceStationBySlug } from '../../lib/contentful';
+import Image from '../../components/Image.astro';
+import { documentToHtmlString } from '@contentful/rich-text-html-renderer';
+import BgImage from '@/components/BgImage.astro';
+import AdvisorBanner from '@/components/AdvisorBanner.astro';
+const { stationId } = Astro.params;
+const entry = await getServiceStationBySlug(stationId);
+
+if (!entry) {
+  return Astro.redirect('/404');
+}
+
+const station = {
+  name: entry.fields.name,
+  image: entry.fields.image?.fields.file.url ? entry.fields.image.fields.file.url : '',
+  address: entry.fields.address,
+  phone: entry.fields.phone || '',
+  ext: entry.fields.ext || '',
+  mobile: entry.fields.mobile || '',
+  map: entry.fields.map || '',
+  description: documentToHtmlString(entry.fields.description),
+  schedule: documentToHtmlString(entry.fields.schedule),
+  services: Array.isArray(entry.fields.services) ? entry.fields.services.map(s => s.fields.name) : [],
+};
+
+// Generar mapUrl dinámicamente
+const mapQuery = encodeURIComponent(`${station.name} ${station.address}`);
+const mapUrl = `https://maps.google.com/?q=${mapQuery}`;
+---
+
+<Layout>
+  <BgImage imageUrl={station.image}/>
+  <section class="station-detail">
+    <div class="station-header">
+      <div class="header-content">
+        <img src={station.image} alt={station.name} />
+        <div class="station-overlay"></div>
+        <div class="header-text">
+          <h1>{station.name}</h1>
+          <p set:html={station.description}></p>
+          <div class="cta-section">
+            <a href={mapUrl} class="map-button" target="_blank" rel="noopener noreferrer">
+              Ver en Google Maps
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                <polyline points="15 3 21 3 21 9"></polyline>
+                <line x1="10" y1="14" x2="21" y2="3"></line>
+              </svg>
+            </a>
+            <a href={`https://wa.me/${station.mobile}`} class="whatsapp-button" target="_blank" rel="noopener noreferrer">
+              Contactar por WhatsApp
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/>
+              </svg>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="station-container">
+      <div class="station-content">
+        <div class="info-section">
+          <h2>Información de Contacto</h2>
+          <div class="contact-info">
+            <p>
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                <circle cx="12" cy="10" r="3"></circle>
+              </svg>
+              {station.address}
+            </p>
+            <p>
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+              </svg>
+              Tel: <a href={`tel:${station.phone}`}>{station.phone}</a>{station.ext ? ` Ext: ${station.ext}` : ''}
+            </p>
+            <p>
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+                <line x1="12" y1="18" x2="12" y2="18"></line>
+              </svg>
+              Cel: <a href={`tel:${station.mobile}`}>{station.mobile}</a>
+            </p>
+            <p>
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+              <div set:html={station.schedule}></div>
+            </p>
+          </div>
+        </div>
+
+        <div class="description-section">
+          <h2>Acerca de esta sede</h2>
+          <p set:html={station.description}></p>
+        </div>
+
+        <div class="map-section">
+          <h2>Ubicación</h2>
+          <StationMap address={station.address} name={station.name} map={station.map} />
+        </div>
+
+        <div class="services-section">
+  <h2>Servicios Disponibles</h2>
+  <div class="services-grid">
+    {entry.fields.services && entry.fields.services.map(service => (
+      <div class="service-card" key={service.sys.id}>
+        <div class="service-icon">
+        {service.fields.icon && service.fields.icon[0] ? (
+          <a href={`/servicios/${service.fields.slug}`}><Image name={service.fields.icon[0]} size={200} priority={true} /></a>
+        ) : null}
+        </div>
+        <a href={`/servicios/${service.fields.slug}`}><h3>{service.fields.title}</h3></a>
+        <p>{service.fields.shortDescription}</p>
+      </div>
+    ))}
+  </div>
+</div>  
+      </div>
+    </div>
+  </section>
+  <AdvisorBanner />
+</Layout>
+
+<style>
+  .station-container {
+    padding: 0 2em;
+    box-sizing: border-box;
+  }
+  .station-detail {
+    background: var(--background-color);
+    width: var(--max-width);
+    margin: 0  auto 0 auto;
+    padding-bottom: 3em;
+  }
+
+  .station-header {
+    width: 100%;
+    height: 500px;
+    background: var(--primary-color);
+    margin-bottom: 3rem;
+  }
+
+  .header-content {
+    position: relative;
+    max-width: var(--max-width);
+    height: 100%;
+    margin: 0 auto;
+    overflow: hidden;
+  }
+
+  .header-content img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .station-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(13, 74, 160, 0.897));
+  }
+
+  .header-text {
+    position: absolute;
+    bottom: 4rem;
+    left: 2rem;
+    max-width: 600px;
+    color: white;
+  }
+
+  .header-text h1 {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    color: var(--secondary-color);
+    font-family: var(--font-family-display);
+    text-transform: uppercase;
+  }
+
+  .header-text p {
+    font-size: 1.1rem;
+    line-height: 1.6;
+    opacity: 0.9;
+  }
+
+  .services-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 2rem;
+    padding: 1rem;
+  }
+
+  .service-card {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 2rem;
+    text-align: center;
+    transition: transform 0.3s ease;
+    border: 1px solid var(--primary-color);
+  }
+
+  .service-card:hover {
+    transform: translateY(-5px);
+  }
+
+  h2{
+    font-family: var(--font-family-display);
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    color: var(--primary-color);
+    text-transform: uppercase;
+  }
+
+  .service-icon {
+    width: 200px;
+    height: 200px;
+    margin: 0 auto 1.5rem;
+    background: radial-gradient(75% 75% at 50% 50%, #ffffff 30%, var(--secondary-color) 100%);
+    border: 4px solid var(--primary-color); 
+    border-radius: 50%;
+    display: flex;
+    padding: 1.5em;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    box-sizing: border-box;
+    aspect-ratio: 1/1;
+  }
+
+  .service-card h3 {
+    color: var(--primary-color);
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+  }
+
+  .service-card p {
+    color: var(--text-color);
+    opacity: 0.8;
+    line-height: 1.6;
+  }
+
+  .cta-section {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2rem;
+  }
+
+  .map-button,
+  .whatsapp-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem 2rem;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    flex: 1;
+    justify-content: center;
+  }
+
+  .map-button {
+    background: var(--primary-color);
+    color: white;
+  }
+
+  .whatsapp-button {
+    background: #25D366;
+    color: white;
+  }
+
+  .map-button:hover,
+  .whatsapp-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  }
+
+  @media (max-width: 768px) {
+    .station-detail {
+      width: 100vw;
+      margin: 0;
+      padding: 0 0.5em;
+    }
+    .station-header {
+      height: 260px;
+      min-height: 180px;
+    }
+    .header-content {
+      max-width: 100vw;
+      height: 100%;
+      border-radius: 0;
+    }
+    .header-content img {
+      border-radius: 0;
+    }
+    .header-text {
+      bottom: 1.2rem;
+      left: 0.5rem;
+      right: 0.5rem;
+      max-width: 95vw;
+      padding: 0.5em 0.7em;
+      font-size: 0.97rem;
+    }
+    .header-text h1 {
+      font-size: 1.3rem;
+      margin-bottom: 0.5rem;
+    }
+    .header-text p {
+      font-size: 0.98rem;
+    }
+    .station-container {
+      padding: 0.5em  1em;
+    }
+    .station-content {
+      flex-direction: column;
+      gap: 1.2em;
+    }
+    .info-section, .map-section, .description-section, .services-section {
+      padding: 1em 0.3em;
+      margin-bottom: 1.2em;
+    }
+    .contact-info p, .description-section p {
+      font-size: 1em;
+    }
+    .services-grid {
+      grid-template-columns: 1fr;
+      gap: 1.2em;
+      padding: 0.5em 0.1em;
+    }
+    .service-card {
+      padding: 1.2em 0.7em;
+      font-size: 0.98em;
+    }
+    .service-icon {
+      width: 48px;
+      height: 48px;
+      padding: 0.7em;
+    }
+    .cta-section {
+      flex-direction: column;
+      gap: 0.7em;
+    }
+    .map-button, .whatsapp-button {
+      padding: 0.9em 1.2em;
+      font-size: 1em;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .station-header {
+      height: 140px;
+      min-height: 90px;
+    }
+    .header-text {
+      bottom: 0.5rem;
+      left: 0.2rem;
+      right: 0.2rem;
+      max-width: 98vw;
+      padding: 0.3em 0.2em;
+      font-size: 0.93rem;
+    }
+    .header-text h1 {
+      font-size: 1.02rem;
+    }
+    .station-detail, .station-container {
+      padding: 0;
+      margin: 0;
+      width: 100vw;
+    }
+    .service-card {
+      padding: 0.7em 0.2em;
+      font-size: 0.93em;
+    }
+    .service-icon {
+      width: 38px;
+      height: 38px;
+      padding: 0.4em;
+    }
+    .cta-section {
+      gap: 0.4em;
+    }
+    .map-button, .whatsapp-button {
+      padding: 0.7em 0.7em;
+      font-size: 0.95em;
+    }
+    h2 {
+      font-size: 1.1rem;
+      margin-bottom: 0.5rem;
+    }
+    .info-section, .map-section, .description-section, .services-section {
+      padding: 0.5em 0.1em;
+      margin-bottom: 0.7em;
+    }
+  }
+</style>

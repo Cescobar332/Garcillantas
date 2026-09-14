@@ -1,0 +1,475 @@
+---
+interface Props {
+  type?: 'no-results' | 'no-products' | 'error' | 'loading';
+  title?: string;
+  description?: string;
+  showActions?: boolean;
+  className?: string;
+}
+
+const { 
+  type = 'no-results',
+  title,
+  description,
+  showActions = true,
+  className = ''
+} = Astro.props;
+
+// Default content based on type
+const content = {
+  'no-results': {
+    title: title || 'No se encontraron productos',
+    description: description || 'Intenta ajustar los filtros o realizar una búsqueda diferente',
+    icon: 'search',
+    actions: ['clear-filters', 'browse-all']
+  },
+  'no-products': {
+    title: title || 'Catálogo vacío',
+    description: description || 'Aún no hay productos disponibles en esta categoría',
+    icon: 'box',
+    actions: ['browse-all', 'contact']
+  },
+  'error': {
+    title: title || 'Error al cargar productos',
+    description: description || 'Hubo un problema al cargar los productos. Por favor, intenta nuevamente',
+    icon: 'alert',
+    actions: ['retry', 'contact']
+  },
+  'loading': {
+    title: title || 'Cargando productos...',
+    description: description || 'Por favor espera mientras cargamos los productos',
+    icon: 'loader',
+    actions: []
+  }
+};
+
+const currentContent = content[type];
+---
+
+<div class={`empty-state empty-state-${type} ${className}`} id="empty-state">
+  <div class="empty-content">
+    <div class="empty-icon">
+      {currentContent.icon === 'search' && (
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="11" cy="11" r="8"/>
+          <path d="m21 21-4.35-4.35"/>
+        </svg>
+      )}
+      
+      {currentContent.icon === 'box' && (
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+          <polyline points="3.27,6.96 12,12.01 20.73,6.96"/>
+          <line x1="12" y1="22.08" x2="12" y2="12"/>
+        </svg>
+      )}
+      
+      {currentContent.icon === 'alert' && (
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
+          <path d="M12 9v4"/>
+          <path d="m12 17 .01 0"/>
+        </svg>
+      )}
+      
+      {currentContent.icon === 'loader' && (
+        <div class="loading-spinner">
+          <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+          </svg>
+        </div>
+      )}
+    </div>
+    
+    <div class="empty-text">
+      <h3 class="empty-title">{currentContent.title}</h3>
+      <p class="empty-description">{currentContent.description}</p>
+    </div>
+    
+    {showActions && currentContent.actions.length > 0 && (
+      <div class="empty-actions">
+        {currentContent.actions.includes('clear-filters') && (
+          <button class="empty-action-btn primary" id="clear-filters-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6M8 6V4c0-1 1-2 2-2h4c0 1 1 2 2 2v2"/>
+            </svg>
+            Limpiar filtros
+          </button>
+        )}
+        
+        {currentContent.actions.includes('browse-all') && (
+          <button class="empty-action-btn secondary" id="browse-all-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="7" height="7"/>
+              <rect x="14" y="3" width="7" height="7"/>
+              <rect x="14" y="14" width="7" height="7"/>
+              <rect x="3" y="14" width="7" height="7"/>
+            </svg>
+            Ver todos los productos
+          </button>
+        )}
+        
+        {currentContent.actions.includes('retry') && (
+          <button class="empty-action-btn primary" id="retry-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="23,4 23,10 17,10"/>
+              <path d="M20.49,15a9,9,0,1,1-2.12-9.36L23,10"/>
+            </svg>
+            Intentar nuevamente
+          </button>
+        )}
+        
+        {currentContent.actions.includes('contact') && (
+          <button class="empty-action-btn secondary" id="contact-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+            </svg>
+            Contactar soporte
+          </button>
+        )}
+      </div>
+    )}
+    
+    {type === 'no-results' && (
+      <div class="search-suggestions">
+        <h4>Sugerencias de búsqueda:</h4>
+        <ul class="suggestions-list">
+          <li>Verifica la ortografía de los términos de búsqueda</li>
+          <li>Intenta con palabras más generales</li>
+          <li>Usa menos filtros para ampliar los resultados</li>
+          <li>Busca por marca o modelo específico</li>
+        </ul>
+      </div>
+    )}
+  </div>
+</div>
+
+<script>
+class EmptyState {
+  constructor() {
+    this.emptyState = document.getElementById('empty-state');
+    this.clearFiltersBtn = document.getElementById('clear-filters-btn');
+    this.browseAllBtn = document.getElementById('browse-all-btn');
+    this.retryBtn = document.getElementById('retry-btn');
+    this.contactBtn = document.getElementById('contact-btn');
+    
+    this.init();
+  }
+
+  init() {
+    this.setupEventListeners();
+    this.animateEntry();
+  }
+
+  setupEventListeners() {
+    // Clear filters action
+    this.clearFiltersBtn?.addEventListener('click', () => {
+      document.dispatchEvent(new CustomEvent('clearAllFilters'));
+      this.trackAction('clear_filters');
+    });
+
+    // Browse all products
+    this.browseAllBtn?.addEventListener('click', () => {
+      document.dispatchEvent(new CustomEvent('browseAllProducts'));
+      this.trackAction('browse_all');
+    });
+
+    // Retry action
+    this.retryBtn?.addEventListener('click', () => {
+      document.dispatchEvent(new CustomEvent('retryLoadProducts'));
+      this.trackAction('retry');
+    });
+
+    // Contact support
+    this.contactBtn?.addEventListener('click', () => {
+      // Open WhatsApp or contact form
+      const message = encodeURIComponent('Hola, necesito ayuda con el catálogo de productos');
+      window.open(`https://wa.me/573001234567?text=${message}`, '_blank');
+      this.trackAction('contact_support');
+    });
+  }
+
+  animateEntry() {
+    if (this.emptyState) {
+      // Add entrance animation
+      this.emptyState.style.opacity = '0';
+      this.emptyState.style.transform = 'translateY(20px)';
+      
+      setTimeout(() => {
+        this.emptyState.style.transition = 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
+        this.emptyState.style.opacity = '1';
+        this.emptyState.style.transform = 'translateY(0)';
+      }, 100);
+    }
+  }
+
+  trackAction(action) {
+    // Analytics tracking
+    if (typeof gtag !== 'undefined') {
+      gtag('event', 'empty_state_action', {
+        action_type: action,
+        page_location: window.location.href
+      });
+    }
+  }
+
+  show(type = 'no-results') {
+    if (this.emptyState) {
+      this.emptyState.className = `empty-state empty-state-${type}`;
+      this.emptyState.style.display = 'flex';
+      this.animateEntry();
+    }
+  }
+
+  hide() {
+    if (this.emptyState) {
+      this.emptyState.style.display = 'none';
+    }
+  }
+}
+
+// Initialize when DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+  window.emptyState = new EmptyState();
+});
+</script>
+
+<style>
+  .empty-state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+    padding: 3rem 1rem;
+    text-align: center;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border-radius: 1.5rem;
+    border: 2px dashed #e2e8f0;
+    margin: 2rem 0;
+  }
+
+  .empty-content {
+    max-width: 500px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2rem;
+  }
+
+  .empty-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 120px;
+    height: 120px;
+    background: linear-gradient(135deg, rgba(13, 75, 160, 0.1) 0%, rgba(30, 64, 175, 0.05) 100%);
+    border-radius: 50%;
+    color: #6b7280;
+    position: relative;
+  }
+
+  .empty-state-error .empty-icon {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(220, 38, 38, 0.05) 100%);
+    color: #ef4444;
+  }
+
+  .empty-state-loading .empty-icon {
+    background: linear-gradient(135deg, rgba(13, 75, 160, 0.1) 0%, rgba(30, 64, 175, 0.05) 100%);
+    color: var(--primary-color);
+  }
+
+  .loading-spinner {
+    animation: spin 1s linear infinite;
+  }
+
+  .empty-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .empty-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #111827;
+    margin: 0;
+  }
+
+  .empty-description {
+    font-size: 1rem;
+    color: #6b7280;
+    line-height: 1.6;
+    margin: 0;
+  }
+
+  .empty-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .empty-action-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.875rem 1.5rem;
+    border-radius: 0.75rem;
+    font-weight: 600;
+    font-size: 0.9375rem;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    text-decoration: none;
+    border: none;
+    white-space: nowrap;
+  }
+
+  .empty-action-btn.primary {
+    background: var(--primary-color);
+    color: white;
+    box-shadow: 0 4px 20px rgba(13, 75, 160, 0.3);
+  }
+
+  .empty-action-btn.primary:hover {
+    background: #1e40af;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(13, 75, 160, 0.4);
+  }
+
+  .empty-action-btn.secondary {
+    background: white;
+    color: var(--primary-color);
+    border: 2px solid var(--primary-color);
+  }
+
+  .empty-action-btn.secondary:hover {
+    background: var(--primary-color);
+    color: white;
+    transform: translateY(-2px);
+  }
+
+  .search-suggestions {
+    background: white;
+    border-radius: 1rem;
+    padding: 1.5rem;
+    border: 1px solid #e5e7eb;
+    text-align: left;
+    max-width: 400px;
+  }
+
+  .search-suggestions h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #374151;
+    margin: 0 0 1rem 0;
+  }
+
+  .suggestions-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .suggestions-list li {
+    font-size: 0.875rem;
+    color: #6b7280;
+    padding-left: 1.5rem;
+    position: relative;
+  }
+
+  .suggestions-list li::before {
+    content: '•';
+    color: var(--primary-color);
+    font-weight: bold;
+    position: absolute;
+    left: 0;
+  }
+
+  /* Type-specific styles */
+  .empty-state-loading {
+    border-style: solid;
+    border-color: rgba(13, 75, 160, 0.2);
+    background: linear-gradient(135deg, rgba(13, 75, 160, 0.02) 0%, rgba(30, 64, 175, 0.01) 100%);
+  }
+
+  .empty-state-error {
+    border-color: rgba(239, 68, 68, 0.3);
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.02) 0%, rgba(220, 38, 38, 0.01) 100%);
+  }
+
+  .empty-state-error .empty-title {
+    color: #dc2626;
+  }
+
+  /* Animations */
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+
+  .empty-state-loading .empty-icon {
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  /* Responsive Design */
+  @media (max-width: 768px) {
+    .empty-state {
+      min-height: 300px;
+      padding: 2rem 1rem;
+      margin: 1rem 0;
+    }
+
+    .empty-content {
+      gap: 1.5rem;
+    }
+
+    .empty-icon {
+      width: 80px;
+      height: 80px;
+    }
+
+    .empty-icon svg {
+      width: 48px;
+      height: 48px;
+    }
+
+    .empty-title {
+      font-size: 1.25rem;
+    }
+
+    .empty-actions {
+      flex-direction: column;
+      width: 100%;
+    }
+
+    .empty-action-btn {
+      width: 100%;
+      justify-content: center;
+    }
+
+    .search-suggestions {
+      padding: 1rem;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .empty-state {
+      border-radius: 1rem;
+      padding: 1.5rem 0.75rem;
+    }
+
+    .empty-action-btn {
+      padding: 0.75rem 1.25rem;
+      font-size: 0.875rem;
+    }
+  }
+</style>

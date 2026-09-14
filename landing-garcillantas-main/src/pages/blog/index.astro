@@ -1,0 +1,248 @@
+---
+export const prerender = false; // Deshabilitar prerender para esta página
+
+import Layout from '../../layouts/Layout.astro';
+import { getAllBlogPosts } from '../../lib/contentful';
+import type { BlogPost } from '../../lib/contentful';
+import FeaturedPost from '../../components/FeaturedPost.astro';
+
+let posts: BlogPost[] = [];
+let error = null;
+
+try {
+  posts = await getAllBlogPosts();
+  if (posts.length > 0) {
+    posts = posts.sort((a, b) => 
+      new Date(b.fields.publishedDate).valueOf() - new Date(a.fields.publishedDate).valueOf()
+    );
+  }
+} catch (e) {
+  console.error('Error fetching blog posts:', e);
+  error = e;
+}
+---
+
+<Layout title="Blog - Garcillantas" description="Descubre artículos y consejos sobre el cuidado de tu vehículo, mantenimiento de llantas y servicios automotrices.">
+  <section class="blog-section">
+    <div class="blog-container">
+      <h1>Blog Garcillantas</h1>
+      <p class="subtitle">Consejos y noticias sobre el cuidado de tu vehículo</p>
+
+      {error ? (
+        <div class="error-message">
+          <p>Lo sentimos, ha ocurrido un error al cargar los artículos.</p>
+          <button id="retry-button" class="retry-button">Intentar de nuevo</button>
+        </div>
+      ) : posts.length === 0 ? (
+        <div class="loading-message">
+          <p>Cargando artículos...</p>
+        </div>
+      ) : (
+        <>
+          <FeaturedPost post={posts[0]} />
+          <div class="posts-grid">
+            {posts.map((post:BlogPost) => (
+              <article class="post-card">
+                <div class="post-image">
+                  <img src={post.fields.featuredImage.fields.file.url} alt={post.fields.title} loading="lazy" />
+                </div>
+                <div class="post-content">
+                  <div class="post-meta">
+                    <time datetime={post.fields.publishedDate}>
+                      {new Date(post.fields.publishedDate).toLocaleDateString('es-ES', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                      })}
+                    </time>
+                  </div>
+                  <h2>{post.fields.title}</h2>
+                  <p>{post.fields.subtitle}</p>
+                  <a href={`/blog/${post.fields.slug}`} class="read-more">
+                    Leer más
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M5 12h14M12 5l7 7-7 7"/>
+                    </svg>
+                  </a>
+                </div>
+              </article>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  </section>
+</Layout>
+
+<script>
+  // Client-side retry logic
+  const retryButton = document.getElementById('retry-button');
+  if (retryButton) {
+    retryButton.addEventListener('click', () => {
+      window.location.reload();
+    });
+  }
+</script>
+
+<style>
+  .blog-section {
+    padding: var(--spacing-xl) 0;
+    background-color: var(--color-background);
+  }
+
+  .blog-container {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    padding: 0 var(--spacing-md);
+  }
+
+  h1 {
+    text-align: center;
+    font-size: 3rem;
+    color: var(--primary-color);
+    margin-bottom: var(--spacing-sm);
+  }
+
+  .subtitle {
+    text-align: center;
+    color: var(--color-text-light);
+    margin-bottom: var(--spacing-xl);
+  }
+
+  .posts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-xl);
+  }
+
+  .post-card {
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease;
+  }
+
+  .post-card:hover {
+    transform: translateY(-5px);
+  }
+
+  .post-image {
+    aspect-ratio: 16/9;
+    overflow: hidden;
+  }
+
+  .post-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+  }
+
+  .post-card:hover .post-image img {
+    transform: scale(1.05);
+  }
+
+  .post-content {
+    padding: var(--spacing-md);
+  }
+
+  .post-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-sm);
+    font-size: 0.9rem;
+    color: var(--color-text-light);
+  }
+
+  .post-tags {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .tag {
+    background: var(--color-background);
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+  }
+
+  .post-content h2 {
+    margin: 0 0 var(--spacing-sm);
+    font-size: 1.5rem;
+    color: var(--primary-color);
+  }
+
+  .post-content p {
+    margin: 0;
+    color: var(--color-text);
+    line-height: 1.6;
+  }
+
+  .read-more {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: var(--spacing-md);
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.3s ease;
+  }
+
+  .read-more:hover {
+    color: var(--secondary-color);
+  }
+
+  .error-message {
+    text-align: center;
+    padding: var(--spacing-xl);
+    background: #fff3f3;
+    border-radius: 8px;
+    margin: var(--spacing-xl) 0;
+  }
+
+  .no-posts {
+    text-align: center;
+    padding: var(--spacing-xl);
+    background: #f5f5f5;
+    border-radius: 8px;
+    margin: var(--spacing-xl) 0;
+  }
+
+  .loading-message {
+    text-align: center;
+    padding: var(--spacing-xl);
+    background: #f5f5f5;
+    border-radius: 8px;
+    margin: var(--spacing-xl) 0;
+  }
+
+  .retry-button {
+    margin-top: var(--spacing-md);
+    padding: 0.5rem 1rem;
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+
+  .retry-button:hover {
+    background-color: var(--secondary-color);
+  }
+
+  @media (max-width: 768px) {
+    .posts-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .post-meta {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.5rem;
+    }
+  }
+</style>

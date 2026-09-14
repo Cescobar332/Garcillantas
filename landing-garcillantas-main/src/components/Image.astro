@@ -1,0 +1,36 @@
+---
+interface Props {
+  name: string;
+  size?: number;
+  class?: string;
+  priority?: boolean;
+}
+
+const { name, size = 34, class: className = '', priority = false } = Astro.props;
+
+const imagePath = `/images/services/${name}.webp`;
+const sizes = `(max-width: 768px) ${size}px, ${size}px`;
+---
+
+<img
+  src={imagePath}
+  class={`service-image ${className}`}
+  width={size}
+  height={size}
+  alt={name}
+  loading={priority ? 'eager' : 'lazy'}
+  decoding={priority ? 'sync' : 'async'}
+  fetchpriority={priority ? 'high' : 'auto'}
+  sizes={sizes}
+/>
+
+<style>
+  .service-image {
+    display: inline-block;
+    vertical-align: middle;
+    object-fit: contain;
+    aspect-ratio: 1/1;
+    width: 100%;
+    height: auto;
+  }
+</style>

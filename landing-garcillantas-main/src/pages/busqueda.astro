@@ -1,0 +1,167 @@
+---
+import Layout from '../layouts/Layout.astro';
+import TireSearch from '../components/TireSearch.astro';
+import TireCard from '../components/TireCard.astro';
+import { getAllTires } from '../lib/contentful';
+
+// Obtener el término de búsqueda de la URL
+const { q } = Astro.url.searchParams;
+const searchTerm = q || '';
+
+// Obtener todas las llantas
+const tires = await getAllTires();
+
+// Formatear las llantas
+const formattedTires = tires.map(tire => ({
+  id: tire.fields.slug,
+  title: tire.fields.title,
+  brand: tire.fields.brand || { fields: { brand: 'Sin marca' } },
+  design: tire.fields.design,
+  image: tire.fields.featuredImage?.fields.file.url || '/images/tire.webp',
+  size: tire.fields.size || []
+}));
+
+// Título de la página
+const title = searchTerm 
+  ? `Resultados para "${searchTerm}" | Garcillantas` 
+  : 'Buscar llantas | Garcillantas';
+---
+
+<Layout title={title}>
+  <div class="search-page">
+    <div class="search-header">
+      <h1 class="page-title">
+        {searchTerm 
+          ? `Resultados para "${searchTerm}"` 
+          : 'Buscar llantas'}
+      </h1>
+      <TireSearch />
+    </div>
+    
+    <div class="tires-grid" id="tiresGrid">
+      {formattedTires.map(tire => (
+        <TireCard {...tire} />
+      ))}
+    </div>
+  </div>
+</Layout>
+
+<script>
+  document.addEventListener('astro:page-load', () => {
+    const tiresGrid = document.getElementById('tiresGrid');
+    const searchInput = document.getElementById('tireSearchInput') as HTMLInputElement;
+    const searchTerm = new URLSearchParams(window.location.search).get('q')?.toLowerCase() || '';
+
+    // Establecer el valor inicial del input de búsqueda
+    if (searchInput && searchTerm) {
+      searchInput.value = searchTerm;
+    }
+
+    // Función para filtrar las llantas
+    const filterTires = (searchTerm: string) => {
+      const tireCards = tiresGrid?.querySelectorAll('.tire-card') || [];
+
+      tireCards.forEach(card => {
+        const tireBrand = card.getAttribute('data-brand')?.toLowerCase() || '';
+        const tireTitle = card.querySelector('.tire-title')?.textContent?.toLowerCase() || '';
+        const tireDesign = card.querySelector('.design')?.textContent?.toLowerCase() || '';
+        const tireSize = card.querySelector('.tire-size .values')?.textContent?.toLowerCase() || '';
+
+        const matches = !searchTerm || 
+          tireTitle.includes(searchTerm) || 
+          tireDesign.includes(searchTerm) || 
+          tireBrand.includes(searchTerm) ||
+          tireSize.includes(searchTerm);
+
+        (card as HTMLElement).style.display = matches ? '' : 'none';
+      });
+
+      // Mostrar mensaje de no resultados si es necesario
+      const visibleCards = Array.from(tireCards).filter(card => 
+        (card as HTMLElement).style.display !== 'none'
+      );
+
+      const noResultsElement = document.querySelector('.no-results');
+      if (noResultsElement) {
+        noResultsElement.remove();
+      }
+
+      if (visibleCards.length === 0 && searchTerm) {
+        const noResults = document.createElement('div');
+        noResults.className = 'no-results';
+        noResults.innerHTML = `No se encontraron llantas para "${searchTerm}"`;
+        tiresGrid?.appendChild(noResults);
+      }
+    };
+
+    // Filtrar inicialmente si hay término de búsqueda
+    if (searchTerm) {
+      filterTires(searchTerm);
+    }
+
+    // Escuchar eventos de búsqueda
+    window.addEventListener('tireSearch', (e) => {
+      const searchTerm = (e as CustomEvent<{searchTerm: string}>).detail.searchTerm.toLowerCase();
+      filterTires(searchTerm);
+    });
+  });
+</script>
+
+<style>
+  .search-page {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    padding: 2rem 1rem 4rem;
+  }
+
+  .search-header {
+    margin-bottom: 2rem;
+  }
+
+  .page-title {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: var(--primary-color);
+    margin-bottom: 1.5rem;
+    font-family: var(--font-family-display);
+  }
+
+  .tires-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 2rem;
+    margin-top: 2rem;
+  }
+
+  .loading {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 3rem 0;
+    color: var(--text-color-light);
+    font-size: 1.2rem;
+  }
+
+  @media (max-width: 768px) {
+    .search-page {
+      padding: 1.5rem 0.75rem 3rem;
+    }
+
+    .page-title {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+    }
+
+    .tires-grid {
+      gap: 1.5rem;
+      margin-top: 1.5rem;
+    }
+  }
+
+  .no-results {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 3rem 0;
+    color: var(--text-color);
+    font-size: 1.2rem;
+  }
+</style>

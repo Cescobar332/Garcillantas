@@ -1,0 +1,170 @@
+---
+import { marked } from 'marked';
+
+interface Props {
+  content: string;
+  className?: string;
+  sanitize?: boolean;
+}
+
+const { content, className = '', sanitize = true } = Astro.props;
+
+// Configure marked options
+marked.setOptions({
+  breaks: true,
+  gfm: true,
+});
+
+// Render the markdown content with custom styling
+let htmlContent = '';
+try {
+  htmlContent = marked(content || '');
+  
+  // Apply custom CSS classes to the rendered HTML
+  htmlContent = htmlContent
+    // Headings
+    .replace(/<h1>/g, '<h1 class="text-2xl font-bold mb-4" style="color: #111827;">')
+    .replace(/<h2>/g, '<h2 class="text-xl font-semibold mb-3" style="color: #111827;">')
+    .replace(/<h3>/g, '<h3 class="text-lg font-medium mb-2" style="color: #111827;">')
+    .replace(/<h4>/g, '<h4 class="text-base font-medium mb-2" style="color: #111827;">')
+    .replace(/<h5>/g, '<h5 class="text-sm font-medium mb-1" style="color: #111827;">')
+    .replace(/<h6>/g, '<h6 class="text-sm font-medium mb-1" style="color: #111827;">')
+    
+    // Paragraphs
+    .replace(/<p>/g, '<p class="leading-relaxed mb-4" style="color: #111827;">')
+    
+    // Lists
+    .replace(/<ul>/g, '<ul class="list-disc list-inside space-y-2 mb-4 ml-4">')
+    .replace(/<ol>/g, '<ol class="list-decimal list-inside space-y-2 mb-4 ml-4">')
+    .replace(/<li>/g, '<li style="color: #111827;">')
+    
+    // Links
+    .replace(/<a href="/g, '<a href="')
+    .replace(/<a /g, '<a class="text-blue-600 hover:text-blue-800 underline" target="_blank" rel="noopener noreferrer" ')
+    
+    // Strong and emphasis
+    .replace(/<strong>/g, '<strong class="font-semibold text-gray-900">')
+    .replace(/<em>/g, '<em class="italic" style="color: #111827;">')
+    
+    // Code
+    .replace(/<pre><code>/g, '<pre class="bg-gray-100 rounded-lg p-4 mb-4 overflow-x-auto"><code class="text-sm text-gray-800">')
+    .replace(/<code>/g, '<code class="bg-gray-100 text-gray-800 px-2 py-1 rounded text-sm">')
+    
+    // Blockquotes
+    .replace(/<blockquote>/g, '<blockquote class="border-l-4 border-blue-500 pl-4 py-2 mb-4 bg-blue-50 italic" style="color: #111827;">')
+    
+    // Tables
+    .replace(/<table>/g, '<div class="overflow-x-auto mb-4"><table class="min-w-full border border-gray-200 rounded-lg">')
+    .replace(/<\/table>/g, '</table></div>')
+    .replace(/<thead>/g, '<thead class="bg-gray-50">')
+    .replace(/<th>/g, '<th class="px-4 py-2 font-semibold text-gray-900 text-left">')
+    .replace(/<td>/g, '<td class="px-4 py-2 border-t border-gray-200" style="color: #111827;">')
+    
+    // Horizontal rules
+    .replace(/<hr>/g, '<hr class="border-t border-gray-300 my-6">');
+  
+  // Basic sanitization if enabled
+  if (sanitize) {
+    // Remove potentially dangerous elements and attributes
+    htmlContent = htmlContent
+      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+      .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, '')
+      .replace(/on\w+="[^"]*"/gi, '')
+      .replace(/javascript:/gi, '');
+  }
+} catch (error) {
+  console.error('Error rendering markdown:', error);
+  htmlContent = `<p class="text-red-600">Error al renderizar el contenido</p>`;
+}
+---
+
+<div class={`markdown-content ${className}`} set:html={htmlContent} />
+
+<style>
+  .markdown-content {
+    line-height: 1.7;
+  }
+
+  /* Additional styling for better typography */
+  .markdown-content h1:first-child,
+  .markdown-content h2:first-child,
+  .markdown-content h3:first-child,
+  .markdown-content h4:first-child,
+  .markdown-content h5:first-child,
+  .markdown-content h6:first-child {
+    margin-top: 0;
+  }
+
+  .markdown-content p:last-child {
+    margin-bottom: 0;
+  }
+
+  /* Custom styles for better readability */
+  .markdown-content img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 0.5rem;
+    margin: 1rem 0;
+  }
+
+  .markdown-content table {
+    border-collapse: collapse;
+  }
+
+  /* Focus styles for accessibility */
+  .markdown-content a:focus {
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
+  }
+
+  /* Print styles */
+  @media print {
+    .markdown-content {
+      color: black !important;
+    }
+    
+    .markdown-content a {
+      text-decoration: underline;
+    }
+    
+    .markdown-content a[href^="http"]:after {
+      content: " (" attr(href) ")";
+      font-size: 0.8em;
+    }
+  }
+
+  /* Dark mode support */
+  @media (prefers-color-scheme: dark) {
+    .markdown-content {
+      color: ##111827;
+    }
+    
+    .markdown-content h1,
+    .markdown-content h2,
+    .markdown-content h3,
+    .markdown-content h4,
+    .markdown-content h5,
+    .markdown-content h6 {
+      color: #111827;
+    }
+    
+    .markdown-content code,
+    .markdown-content pre {
+      background-color: #374151;
+      color: #111827;
+    }
+    
+    .markdown-content blockquote {
+      background-color: rgba(59, 130, 246, 0.1);
+      border-color: #3b82f6;
+    }
+    
+    .markdown-content table th {
+      background-color: #374151;
+    }
+    
+    .markdown-content hr {
+      border-color: #4b5563;
+    }
+  }
+</style>

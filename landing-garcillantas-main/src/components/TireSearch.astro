@@ -1,0 +1,368 @@
+---
+interface Props {
+  class?: string;
+}
+
+const { class: className } = Astro.props;
+---
+
+<div class:list={['tire-search', className]}>
+  <div class="search-container">
+    <form id="searchForm" action="/busqueda" method="get">
+      <div class="search-box">
+        <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"/>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <input
+          type="text"
+          id="tireSearchInput"
+          name="q"
+          placeholder="Buscar por marca, diseño, tamaño..."
+          class="search-input"
+          autocomplete="off"
+        />
+        <button type="submit" class="search-button">
+          <span>Buscar</span>
+        </button>
+      </div>
+    </form>
+    <div id="searchResults" class="search-results"></div>
+  </div>
+</div>
+
+<style>
+  .tire-search {
+    width: 100%;
+    max-width: var(--max-width);
+    margin: 0 auto;
+    padding: 2rem 1rem;
+    box-sizing: border-box;
+  }
+
+  .search-container {
+    width: 100%;
+    margin: 0 auto;
+  }
+
+  .search-box {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .search-icon {
+    position: absolute;
+    left: 1rem;
+    width: 20px;
+    height: 20px;
+    color: var(--primary-color);
+    pointer-events: none;
+  }
+
+  .search-input {
+    width: 100%;
+    padding: 1rem 1rem 1rem 3rem;
+    border: 2px solid var(--primary-color);
+    border-radius: 12px;
+    font-size: 1.1rem;
+    transition: all 0.3s ease;
+    color: var(--text-color);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  }
+
+  .search-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transform: translateY(-1px);
+  }
+
+  .search-input::placeholder {
+    color: var(--text-color-light);
+  }
+
+  @media (max-width: 768px) {
+    .tire-search {
+      padding: 1.5rem 0.75rem;
+    }
+
+    .search-input {
+      font-size: 1rem;
+      padding: 0.875rem 0.875rem 0.875rem 2.75rem;
+      border-radius: 10px;
+    }
+
+    .search-icon {
+      left: 0.875rem;
+      width: 18px;
+      height: 18px;
+    }
+  }
+
+  .no-results {
+    width: 100%;
+    text-align: center;
+    padding: 2rem;
+    color: var(--text-color);
+    font-size: 1.1rem;
+  }
+  
+  .search-results {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border-radius: 0 0 12px 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    max-height: 400px;
+    overflow-y: auto;
+    z-index: 100;
+    display: none;
+  }
+  
+  .search-results.active {
+    display: block;
+  }
+  
+  .result-item {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #f0f0f0;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+  }
+  
+  .result-item:hover {
+    background-color: #f9f9f9;
+  }
+  
+  .result-item:last-child {
+    border-bottom: none;
+  }
+  
+  .search-button {
+    position: absolute;
+    right: 0.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  
+  .search-button:hover {
+    background-color: var(--primary-color-dark, #d32f2f);
+  }
+  
+  @media (max-width: 768px) {
+    .search-button span {
+      display: none;
+    }
+    
+    .search-button {
+      width: 36px;
+      height: 36px;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .search-button::after {
+      content: "→";
+      font-size: 1.2rem;
+    }
+  }
+</style>
+
+<script>
+  import { getAllTires } from '../lib/contentful';
+
+  document.addEventListener('astro:page-load', async () => {
+    const searchInput = document.getElementById('tireSearchInput') as HTMLInputElement;
+    const searchForm = document.getElementById('searchForm') as HTMLFormElement;
+    const searchResults = document.getElementById('searchResults');
+    const tireGrid = document.querySelector('.tires-grid');
+    let debounceTimer: number;
+    let allTires: any[] = [];
+    let isResultsPage = window.location.pathname.includes('/busqueda');
+
+    // Cargar todas las llantas al inicio
+    try {
+      allTires = await getAllTires();
+    } catch (error) {
+      console.error('Error al cargar las llantas:', error);
+    }
+
+    const filterTires = (searchTerm: string) => {
+      const normalizedSearch = searchTerm.toLowerCase().trim();
+      
+      // Si la búsqueda está vacía, mostrar todas las llantas
+      if (!normalizedSearch) {
+        if (tireGrid && !isResultsPage) {
+          updateTireGrid(allTires);
+        }
+        if (searchResults) {
+          searchResults.innerHTML = '';
+          searchResults.classList.remove('active');
+        }
+        return [];
+      }
+
+      // Filtrar las llantas según el término de búsqueda
+      const filteredTires = allTires.filter(tire => {
+        const { fields } = tire;
+        const brand = fields.brand?.fields?.name?.toLowerCase() || '';
+        const design = fields.design?.toLowerCase() || '';
+        const title = fields.title?.toLowerCase() || '';
+        const sizes = fields.size || [];
+        const rins = fields.rin || [];
+
+        return (
+          brand.includes(normalizedSearch) ||
+          design.includes(normalizedSearch) ||
+          title.includes(normalizedSearch) ||
+          sizes.some((size: string) => size.toLowerCase().includes(normalizedSearch)) ||
+          rins.some((rin: string) => rin.toString().includes(normalizedSearch))
+        );
+      });
+
+      return filteredTires;
+    };
+
+    const updateTireGrid = (tires: any[]) => {
+      if (!tireGrid) return;
+
+      if (tires.length === 0) {
+        tireGrid.innerHTML = `
+          <div class="no-results">
+            <p>No se encontraron llantas que coincidan con tu búsqueda</p>
+          </div>
+        `;
+        return;
+      }
+
+      tireGrid.innerHTML = tires.map(tire => {
+        const { fields } = tire;
+        return `
+            <article class="tire-card" data-brand="${fields.brand?.fields?.name || 'Sin marca'}">
+              <div class="image-container">
+                <img src="${fields.featuredImage?.fields?.file?.url || '/images/tire.webp'}" 
+                    alt="${fields.brand?.fields?.name || 'Sin marca'} ${fields.design || ''}" 
+                    class="tire-image" />
+              </div>
+              <div class="tire-content">
+                <div class="tire-header">
+                  <h3 class="tire-title">${fields.title}</h3>
+                  ${fields.brand ? `<p class="brand">${fields.brand.fields.name}</p>` : ''}
+                </div>
+                ${fields.design ? `<p class="design">${fields.design}</p>` : ''}
+                <div class="tire-actions">
+                  <a href="/llantas/${fields.slug}" class="details-button">Ver Detalles</a>
+                  <a href="https://wa.me/573017209045?text=Hola, estoy interesado en la llanta ${fields.brand?.fields?.name || 'Sin marca'} ${fields.design || ''}"
+                    class="whatsapp-button"
+                    target="_blank"
+                    rel="noopener noreferrer">Consultar Disponibilidad</a>
+                </div>
+              </div>
+            </article>
+        `;
+      }).join('');
+    };
+
+    const updateSearchResults = (tires: any[]) => {
+      if (!searchResults) return;
+      
+      if (tires.length === 0) {
+        searchResults.innerHTML = `<div class="result-item">No se encontraron resultados</div>`;
+        searchResults.classList.add('active');
+        return;
+      }
+
+      // Mostrar solo los primeros 5 resultados para no sobrecargar la interfaz
+      const limitedResults = tires.slice(0, 5);
+      
+      searchResults.innerHTML = limitedResults.map(tire => {
+        const { fields } = tire;
+        return `
+          <div class="result-item" data-slug="${fields.slug}">
+            <div class="result-title">${fields.title}</div>
+            <div class="result-brand">${fields.brand?.fields?.name || 'Sin marca'} - ${fields.design || ''}</div>
+          </div>
+        `;
+      }).join('');
+      
+      searchResults.classList.add('active');
+      
+      // Agregar eventos de clic a los resultados
+      const resultItems = searchResults.querySelectorAll('.result-item');
+      resultItems.forEach(item => {
+        item.addEventListener('click', () => {
+          const slug = item.getAttribute('data-slug');
+          if (slug) {
+            window.location.href = `/llantas/${slug}`;
+          }
+        });
+      });
+    };
+
+    // Evento de búsqueda con debounce para resultados en tiempo real
+    searchInput.addEventListener('input', (e) => {
+      const target = e.target as HTMLInputElement;
+      const searchTerm = target.value;
+      
+      clearTimeout(debounceTimer);
+      debounceTimer = window.setTimeout(() => {
+        const filteredTires = filterTires(searchTerm);
+        
+        // Mostrar resultados en el dropdown si hay término de búsqueda
+        if (searchTerm.trim() !== '') {
+          updateSearchResults(filteredTires);
+        } else {
+          // Ocultar resultados si no hay término de búsqueda
+          if (searchResults) {
+            searchResults.innerHTML = '';
+            searchResults.classList.remove('active');
+          }
+        }
+        
+        // Disparar evento para otros componentes
+        window.dispatchEvent(new CustomEvent('tireSearch', {
+          detail: { searchTerm: searchTerm }
+        }));
+      }, 300);
+    });
+
+    // Cerrar resultados al hacer clic fuera
+    document.addEventListener('click', (e) => {
+      if (searchResults && !searchInput.contains(e.target as Node) && !searchResults.contains(e.target as Node)) {
+        searchResults.classList.remove('active');
+      }
+    });
+
+    // Manejar envío del formulario
+    searchForm.addEventListener('submit', (e) => {
+      const searchTerm = searchInput.value.trim();
+      if (!searchTerm) {
+        e.preventDefault();
+      }
+    });
+
+    // Inicializar la página
+    if (isResultsPage) {
+      // Si estamos en la página de búsqueda, obtener el término de la URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const searchTerm = urlParams.get('q') || '';
+      
+      if (searchInput) {
+        searchInput.value = searchTerm;
+      }
+    }
+  });
+</script>

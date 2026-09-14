@@ -1,0 +1,254 @@
+---
+export const prerender = false; // Deshabilitar prerender para rutas dinámicas
+
+import Layout from '../../layouts/Layout.astro';
+import { getBlogPostBySlug, getAllBlogPosts} from '../../lib/contentful';
+import { documentToHtmlString } from '@contentful/rich-text-html-renderer';
+import RelatedPosts from '../../components/RelatedPosts.astro';
+
+const { slug } = Astro.params;
+const post = await getBlogPostBySlug(slug || '');
+
+if (!post) {
+  return Astro.redirect('/404');
+}
+---
+
+<Layout 
+  title={post.fields.seoFields?.fields.pageTitle || `${post.fields.title} - Blog Garcillantas`}
+  description={post.fields.seoFields?.fields.pageDescription || post.fields.subtitle}
+  image={post.fields.seoFields?.fields.shareImages?.[0]?.fields.file.url || post.fields.featuredImage.fields.file.url}
+  canonicalUrl={post.fields.seoFields?.fields.canonicalUrl}
+  nofollow={post.fields.seoFields?.fields.nofollow}
+  noindex={post.fields.seoFields?.fields.noindex}
+>
+  <article class="blog-post">
+    <div class="post-header">
+      <div class="post-meta">
+        <time datetime={post.fields.publishedDate}>
+          {new Date(post.fields.publishedDate).toLocaleDateString('es-ES', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+          })}
+        </time>
+      </div>
+      <h1>{post.fields.title}</h1>
+      <p class="post-description">{post.fields.subtitle}</p>
+      <div class="author">
+        {post.fields.author.fields.avatar && (
+          <img 
+            src={post.fields.author.fields.avatar.fields.file.url} 
+            alt={post.fields.author.fields.name}
+            class="author-avatar"
+          />
+        )}
+        <span class="author-name">Por {post.fields.author.fields.name}</span>
+      </div>
+    </div>
+
+    <div class="post-image">
+      <img src={post.fields.featuredImage.fields.file.url} alt={post.fields.title} />
+    </div>
+
+    <div class="post-content">
+      {post.fields.content.content.map((node) => {
+        if (node.nodeType === 'embedded-entry-block' && node.data.target.sys.contentType.sys.id === 'componentRichImage') {
+          const image = node.data.target;
+          return (
+            <figure class={`rich-image ${image.fields.fullWidth ? 'full-width' : ''}`}>
+              <img src={image.fields.image.fields.file.url} alt={image.fields.caption || ''} />
+              {image.fields.caption && <figcaption>{image.fields.caption}</figcaption>}
+            </figure>
+          );
+        }
+        return <div set:html={documentToHtmlString(node)} />;
+      })}
+    </div>
+
+    {post.fields.relatedBlogPosts && (
+      <RelatedPosts relatedPosts={post.fields.relatedBlogPosts} />
+    )}
+
+    <div class="post-footer">
+      <a href="/blog" class="back-to-blog">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+        Volver al blog
+      </a>
+    </div>
+  </article>
+</Layout>
+
+<style>
+  .blog-post {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    padding: var(--spacing-xl) var(--spacing-md);
+  }
+
+  .post-header {
+    text-align: center;
+    margin-bottom: var(--spacing-xl);
+  }
+
+  .post-meta {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+    color: var(--color-text-light);
+  }
+
+  .post-tags {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .tag {
+    background: var(--color-background);
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+  }
+
+  h1 {
+    color: var(--primary-color);
+    font-size: 2.5rem;
+    margin-bottom: var(--spacing-md);
+  }
+
+  .post-description {
+    font-size: 1.2rem;
+    color: var(--color-text-light);
+    margin-bottom: var(--spacing-md);
+  }
+
+  .author {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    margin-top: var(--spacing-md);
+    color: var(--color-text-light);
+  }
+
+  .author-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+
+  .author-name {
+    font-weight: 500;
+  }
+
+  .post-image {
+    margin: var(--spacing-xl) 0;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .post-image img {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  .post-content {
+    font-size: 1.1rem;
+    line-height: 1.8;
+    color: var(--color-text);
+  }
+
+  .post-content :global(h2) {
+    color: var(--primary-color);
+    font-size: 1.8rem;
+    margin: 2rem 0 1rem;
+  }
+
+  .post-content :global(h3) {
+    color: var(--primary-color);
+    font-size: 1.4rem;
+    margin: 1.5rem 0 1rem;
+  }
+
+  .post-content :global(p) {
+    margin-bottom: 1.5rem;
+  }
+
+  .post-content :global(ul),
+  .post-content :global(ol) {
+    margin-bottom: 1.5rem;
+    padding-left: 1.5rem;
+  }
+
+  .post-content :global(li) {
+    margin-bottom: 0.5rem;
+  }
+
+  .rich-image {
+    margin: 2rem 0;
+    text-align: center;
+  }
+
+  .rich-image img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+  }
+
+  .rich-image.full-width {
+    margin-left: calc(-1 * var(--spacing-md));
+    margin-right: calc(-1 * var(--spacing-md));
+  }
+
+  .rich-image.full-width img {
+    border-radius: 0;
+  }
+
+  .rich-image figcaption {
+    margin-top: 0.5rem;
+    font-size: 0.9rem;
+    color: var(--color-text-light);
+    font-style: italic;
+  }
+
+  .post-footer {
+    margin-top: var(--spacing-xl);
+    padding-top: var(--spacing-lg);
+    border-top: 1px solid var(--color-border);
+  }
+
+  .back-to-blog {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.3s ease;
+  }
+
+  .back-to-blog:hover {
+    color: var(--secondary-color);
+  }
+
+  @media (max-width: 768px) {
+    .post-meta {
+      flex-direction: column;
+      gap: var(--spacing-sm);
+    }
+
+    h1 {
+      font-size: 2rem;
+    }
+
+    .post-description {
+      font-size: 1.1rem;
+    }
+  }
+</style>

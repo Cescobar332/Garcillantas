@@ -1,0 +1,553 @@
+---
+import Image from '@/components/Image.astro';
+import Layout from '../../layouts/Layout.astro';
+import { getServiceBySlug } from '../../lib/contentful';
+import { documentToHtmlString } from '@contentful/rich-text-html-renderer';
+import AdvisorBanner from '@/components/AdvisorBanner.astro';
+import BgImage from '@/components/BgImage.astro';
+import WhatsAppBtnPopup from '@/components/WhatsAppBtnPopup.astro';
+
+const { serviceId } = Astro.params;
+const service = await getServiceBySlug(serviceId);
+console.log(service?.fields.serviceStation);
+
+if (!service) {
+  return Astro.redirect('/404');
+}
+
+const serviceData = {
+  id: service.fields.slug,
+  title: service.fields.title,
+  description: service.fields.shortDescription,
+  longDescription: documentToHtmlString(service.fields.longDescription),
+  images: service.fields.galleryImages?.map(image => image.fields.file.url) || [],
+  benefits: service.fields.benefits,
+  icon: service.fields.icon?.[0] || 'service-wrench'
+};
+
+---
+
+<Layout
+  title={service.fields.seoMetadata?.fields.pageTitle || serviceData.title}
+  description={service.fields.seoMetadata?.fields.pageDescription || serviceData.description}
+  image={service.fields.featuredImage?.fields.file.url || "/images/og-image.jpg"}
+>
+<BgImage imageUrl={serviceData.images[0]} />
+  <section class="service-detail">
+    <div class="service-header" style={`background-image: url(${serviceData.images[0]}); background-size: cover; background-position: center;`}>
+      <div class="header-content">
+        <div class="text-content">
+          <h1>{serviceData.title}</h1>
+          <p class="description">{serviceData.description}</p>
+          <br />
+          <WhatsAppBtnPopup text="Solicitar este servicio" position="left" />
+        </div>
+        <div class="image-content">
+          <div class="icon-wrapper">
+            <picture>
+              <Image name={serviceData.icon} size={200} priority={true}/>
+            </picture>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="service-container">
+      <div class="service-content">
+        <div class="info-section">
+          <h2>Descripción del Servicio</h2>
+          <div class="long-description" set:html={serviceData.longDescription}></div>
+        </div>
+
+        <div class="benefits-section">
+          <h2>Beneficios</h2>
+          <div class="benefits-grid">
+            {serviceData.benefits.map(benefit => (
+              <div class="benefit-card">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                  <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                </svg>
+                <p>{benefit}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div class="gallery-section">
+          <h2>Galería</h2>
+          <div class="image-gallery">
+            {serviceData.images.map((image, index) => (
+              <div class="gallery-item" onClick={() => `openModal(${index})`}>
+                <img src={image} alt={`${service.title} en Garcillantas ${index + 1}`} />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Modal */}
+        <div id="galleryModal" class="modal">
+          <button class="modal-close" onclick="closeModal()">×</button>
+          <button class="nav-button prev" onclick="navigate(-1)">❮</button>
+          <button class="nav-button next" onclick="navigate(1)">❯</button>
+          <img id="modalImage" src="" alt="Modal image" />
+        </div>
+
+        <div class="locations-section">
+          <h2>Disponible en nuestras sedes</h2>
+          <div class="locations-grid">
+            {service.fields.serviceStation && service.fields.serviceStation.map(sede => (
+            <a href={`/servitecas/${sede.fields.slug}`} class="location-card">
+              <img src={sede.fields.image.fields.file.url} alt={sede.fields.name} />
+              <h3>{sede.fields.name}</h3>
+            </a>
+          ))}
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+  <AdvisorBanner />
+</Layout>
+
+<style>
+  .service-detail {
+    background: var(--background-color);
+  }
+
+  .service-header {
+    background: var(--primary-color);
+    padding: 4rem 0;
+    color: white;
+    overflow: hidden;
+    position: relative;
+    z-index: 2;
+  }
+  .service-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.3),rgba(13, 75, 160, 0.7));
+    z-index: 1;
+  }
+
+  .header-content {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    padding: 0 var(--spacing-md);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    align-items: center;
+    z-index: 2;
+    position: relative;
+  }
+
+  .text-content {
+    text-align: left;
+  }
+  .text-content h1 {
+    font-family: var(--font-family-display);
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    color: var(--secondary-color);
+  }
+
+  .text-content p {
+    font-size: 1.2rem;
+    opacity: 0.9;
+    padding: 0;
+    margin: 0;
+  }
+
+  .image-content {
+    text-align: center;
+    box-sizing: border-box;
+  }
+
+  .icon-wrapper {
+    width: 300px;
+    height: 300px;
+    margin: 0 auto;
+    background: radial-gradient(75% 75% at 50% 50%, #ffffff 30%, var(--secondary-color) 100%);
+    border: 20px solid rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--secondary-color);
+    position: relative;
+    transition: transform 0.3s ease;
+    box-sizing: border-box;
+  }
+
+  .icon-wrapper::before {
+    content: '';
+    position: absolute;
+    top: -25px;
+    left: -25px;
+    right: -25px;
+    bottom: -25px;
+    border: 25px solid var(--primary-color);
+    border-radius: 50%;
+    box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.5);
+  }
+
+  .icon-wrapper::after {
+    content: '';
+    position: absolute;
+    inset: -18px;
+    border: 10px dashed rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+  }
+
+  @keyframes rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  .header-content:hover .icon-wrapper {
+    animation: rotate 10s linear infinite;
+  }
+
+  @keyframes counter-rotate {
+    from { transform: rotate(360deg); }
+    to { transform: rotate(0deg); }
+  }
+
+  .header-content:hover  picture{
+    animation: counter-rotate 10s linear infinite;
+  }
+
+  @media (max-width: 768px) {
+    .header-content {
+      grid-template-columns: 1fr;
+      text-align: center;
+    }
+
+    .text-content {
+      text-align: center;
+      order: 2;
+    }
+
+    .icon-wrapper {
+      order: 1;
+    }
+  }
+  h1 {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+  }
+
+  h2{
+    color: var(--primary-color);
+    font-size: 2rem;
+    
+  }
+
+  .description {
+    font-size: 1.2rem;
+    opacity: 0.9;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  .service-container {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    padding: 2em var(--spacing-md);
+  }
+
+  .info-section,
+  .benefits-section,
+  .gallery-section,
+  .locations-section {
+    margin-bottom: 4rem;
+  }
+
+  .info-section h2 {
+    color: var(--primary-color);
+    font-size: 2rem;
+    margin-bottom: 2rem;
+  }
+
+  .long-description h2 {
+    color: var(--primary-color);
+    font-size: 2rem;
+    margin-bottom: 2rem;
+  }
+
+  .long-description {
+    color: var(--text-color);
+    line-height: 1.8;
+  }
+
+  /* Estilos para el contenido generado por set:html */
+  .long-description :global(p) {
+    margin-bottom: 1.5rem;
+  }
+
+  .long-description :global(h2) {
+    color: var(--primary-color);
+    font-size: 2rem;
+    margin: 2rem 0 1rem;
+  }
+
+  .long-description :global(h3) {
+    color: var(--primary-color);
+    font-size: 1.5rem;
+    margin: 1.5rem 0 1rem;
+  }
+
+  .long-description :global(ul), 
+  .long-description :global(ol) {
+    margin: 1rem 0;
+    padding-left: 2rem;
+  }
+
+  .long-description :global(li) {
+    margin-bottom: 0.5rem;
+  }
+
+  .long-description :global(a) {
+    color: var(--primary-color);
+    text-decoration: underline;
+  }
+
+  .long-description :global(img) {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    margin: 1.5rem 0;
+  }
+
+  .long-description :global(blockquote) {
+    border-left: 4px solid var(--primary-color);
+    padding-left: 1rem;
+    margin: 1.5rem 0;
+    font-style: italic;
+  }
+
+  .benefits-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 2rem;
+  }
+
+  .benefit-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.5rem;
+    background: linear-gradient(135deg,var(--secondary-color), #ffffff9e );
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .benefit-card svg {
+    color: var(--primary-color);
+    flex-shrink: 0;
+  }
+
+  .image-gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+  }
+
+  .gallery-item {
+    border-radius: 12px;
+    overflow: hidden;
+    aspect-ratio: 16/9;
+  }
+
+  .gallery-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+  }
+
+  .gallery-item:hover img {
+    transform: scale(1.05);
+  }
+
+  .modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.9);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .modal img {
+    max-width: 90%;
+    max-height: 90vh;
+    object-fit: contain;
+  }
+
+  .modal-close {
+    position: absolute;
+    top: 20px;
+    right: 30px;
+    font-size: 30px;
+    color: white;
+    background: none;
+    border: none;
+    cursor: pointer;
+  }
+
+  .nav-button {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    border: none;
+    padding: 20px;
+    cursor: pointer;
+    font-size: 24px;
+    transition: background 0.3s;
+  }
+
+  .nav-button:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
+
+  .prev {
+    left: 20px;
+  }
+
+  .next {
+    right: 20px;
+  }
+
+  .locations-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 2rem;
+  }
+
+  .location-card {
+    text-decoration: none;
+    color: inherit;
+    border-radius: 12px;
+    overflow: hidden;
+    transition: transform 0.3s ease;
+  }
+
+  .location-card:hover {
+    transform: translateY(-5px);
+  }
+
+  .location-card img {
+    width: 100%;
+    aspect-ratio: 16/9;
+    object-fit: cover;
+  }
+
+  .location-card h3 {
+    padding: 1rem;
+    background: var(--primary-color);
+    color: white;
+    margin: 0;
+  }
+
+  .whatsapp-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: #25D366;
+    color: white;
+    padding: 1rem 2rem;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: bold;
+    transition: all 0.3s ease;
+  }
+
+  .whatsapp-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(37, 211, 102, 0.3);
+  }
+
+  @media (max-width: 768px) {
+    h1 {
+      font-size: 2rem;
+    }
+
+    .service-header {
+      padding: 3rem 0;
+    }
+
+    .benefits-grid,
+    .image-gallery,
+    .locations-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<script>
+  let currentImageIndex = 0;
+  const images = [...document.querySelectorAll('.gallery-item img')].map(img => img.src);
+  const modal = document.getElementById('galleryModal');
+  const modalImage = document.getElementById('modalImage');
+
+  function openModal(index) {
+    currentImageIndex = index;
+    updateModalImage();
+    modal.style.display = 'flex';
+  }
+
+  function closeModal() {
+    modal.style.display = 'none';
+  }
+
+  function updateModalImage() {
+    modalImage.src = images[currentImageIndex];
+  }
+
+  function navigate(direction) {
+    currentImageIndex = (currentImageIndex + direction + images.length) % images.length;
+    updateModalImage();
+  }
+
+  // Event Listeners
+  document.addEventListener('keydown', (e) => {
+    if (modal.style.display === 'flex') {
+      switch(e.key) {
+        case 'Escape':
+          closeModal();
+          break;
+        case 'ArrowLeft':
+          navigate(-1);
+          break;
+        case 'ArrowRight':
+          navigate(1);
+          break;
+      }
+    }
+  });
+
+  // Click outside to close
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      closeModal();
+    }
+  });
+
+  // Add click handlers to gallery items
+  document.querySelectorAll('.gallery-item').forEach((item, index) => {
+    item.addEventListener('click', () => openModal(index));
+  });
+</script>

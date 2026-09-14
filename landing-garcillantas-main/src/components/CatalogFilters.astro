@@ -1,0 +1,492 @@
+---
+interface Props {
+  allRims: number[];
+  allWidths: number[];
+  allProfiles: number[];
+  allUsageTypes: string[];
+  totalProducts: number;
+}
+
+const { allRims, allWidths, allProfiles, allUsageTypes, totalProducts } = Astro.props;
+---
+
+<div class="filters-container">
+  <div class="filters-header">
+    <h2>Filtrar productos</h2>
+  </div>
+
+
+  <div class="filters-grid">
+    <div class="filter-group">
+      <label for="filter-width">
+        <span>Ancho</span>
+      </label>
+      <div class="search-field">
+        <select id="filter-width" class="tire-select">
+          <option value="">Selecciona ancho</option>
+          {allWidths.map((width) => 
+            <option value={width.toString()}>{width}</option>
+          )}
+        </select>
+        <svg class="dropdown-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="6,9 12,15 18,9"></polyline>
+        </svg>
+      </div>
+    </div>
+
+    <div class="filter-group">
+      <label for="filter-profile">
+        <span>Perfil</span>
+      </label>
+      <div class="search-field">
+        <select id="filter-profile" class="tire-select">
+          <option value="">Selecciona perfil</option>
+          {allProfiles.map((profile) => 
+            <option value={profile.toString()}>{profile}</option>
+          )}
+        </select>
+        <svg class="dropdown-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="6,9 12,15 18,9"></polyline>
+        </svg>
+      </div>
+    </div>
+
+    <div class="filter-group">
+      <label for="filter-rim">
+        <span>Rin</span>
+      </label>
+      <div class="search-field">
+        <select id="filter-rim" class="tire-select">
+          <option value="">Selecciona rin</option>
+          {allRims.map((rim) => 
+            <option value={rim.toString()}>{rim}</option>
+          )}
+        </select>
+        <svg class="dropdown-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="6,9 12,15 18,9"></polyline>
+        </svg>
+      </div>
+    </div>
+
+    <div class="filter-group">
+      <label for="filter-usage-type">
+        <span>Tipo de uso</span>
+      </label>
+      <div class="search-field">
+        <select id="filter-usage-type" class="tire-select">
+          <option value="">Selecciona tipo de uso</option>
+          {allUsageTypes.map((usageType) => 
+            <option value={usageType}>{usageType}</option>
+          )}
+        </select>
+        <svg class="dropdown-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="6,9 12,15 18,9"></polyline>
+        </svg>
+      </div>
+    </div>
+
+    <div class="filter-group">
+      <button class="reset-filters-btn" id="reset-filters">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+          <path d="M21 3v5h-5"/>
+          <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+          <path d="M3 21v-5h5"/>
+        </svg>
+        Resetear filtros
+      </button>
+    </div>
+  </div>
+
+  <div class="results-summary">
+    <span id="results-count">{totalProducts} productos encontrados</span>
+  </div>
+</div>
+
+<style>
+  .filters-container {
+    background: white;
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
+    box-sizing: border-box;
+    padding: 1.5rem;
+    border-radius: 1rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  }
+
+  .filters-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #e5e7eb;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .filters-header h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #111827;
+    margin: 0;
+    flex-shrink: 0;
+  }
+
+  .clear-filters {
+    padding: 0.5rem 1rem;
+    background: white;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    color: #6b7280;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .clear-filters:hover {
+    background: #f3f4f6;
+    border-color: #d1d5db;
+  }
+
+  .filters-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    min-width: 0;
+  }
+
+  .filter-group label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #374151;
+  }
+
+  .search-field {
+    position: relative;
+  }
+
+  .tire-select {
+    width: 100%;
+    padding: 0.75rem 2.5rem 0.75rem 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    background: white;
+    color: #374151;
+    cursor: pointer;
+    appearance: none;
+    transition: all 0.2s ease;
+    outline: none;
+    box-sizing: border-box;
+  }
+
+  .tire-select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(13, 75, 160, 0.1);
+    transform: translateY(-1px);
+  }
+
+  .tire-select:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+
+  .dropdown-icon {
+    position: absolute;
+    right: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #9ca3af;
+    pointer-events: none;
+    transition: transform 0.2s ease;
+  }
+
+  .search-field:hover .dropdown-icon {
+    color: #6b7280;
+  }
+
+  .tire-select:focus + .dropdown-icon {
+    transform: translateY(-50%) rotate(180deg);
+    color: var(--primary-color);
+  }
+
+  .reset-filters-btn {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background: var(--secondary-color);
+    color: white;
+    border: none;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+  }
+
+  .reset-filters-btn:hover {
+    background: #d97706;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+  }
+
+  .results-summary {
+    padding-top: 1rem;
+    border-top: 1px solid #e5e7eb;
+    font-size: 0.875rem;
+    color: #6b7280;
+    text-align: center;
+  }
+
+  #results-count {
+    font-weight: 600;
+    color: var(--primary-color);
+  }
+
+  @media (max-width: 768px) {
+    .filters-container {
+      display: none;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .filters-container {
+      padding: 1rem;
+    }
+    
+    .filters-header {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 1rem;
+    }
+
+    .tire-select {
+      padding: 0.875rem 2.5rem 0.875rem 0.875rem;
+      font-size: 0.9rem;
+    }
+
+    .dropdown-icon {
+      right: 0.75rem;
+      width: 14px;
+      height: 14px;
+    }
+  }
+</style>
+
+<script>
+// Simplified Catalog Filters Component
+(function() {
+  class CatalogFilters {
+    constructor() {
+      this.widthSelect = document.getElementById('filter-width');
+      this.profileSelect = document.getElementById('filter-profile');
+      this.rimSelect = document.getElementById('filter-rim');
+      this.usageTypeSelect = document.getElementById('filter-usage-type');
+      this.resetBtn = document.getElementById('reset-filters');
+      this.clearBtn = document.getElementById('clear-filters');
+      this.resultsCount = document.getElementById('results-count');
+      
+      this.currentFilters = {
+        width: '',
+        profile: '',
+        rim: '',
+        usageType: ''
+      };
+      
+      this.init();
+    }
+
+    init() {
+      if (this.widthSelect) {
+        this.widthSelect.addEventListener('change', (e) => {
+          this.currentFilters.width = e.target.value;
+          this.updateFilters();
+        });
+      }
+      
+      if (this.profileSelect) {
+        this.profileSelect.addEventListener('change', (e) => {
+          this.currentFilters.profile = e.target.value;
+          this.updateFilters();
+        });
+      }
+      
+      if (this.rimSelect) {
+        this.rimSelect.addEventListener('change', (e) => {
+          this.currentFilters.rim = e.target.value;
+          this.updateFilters();
+        });
+      }
+
+      if (this.usageTypeSelect) {
+        this.usageTypeSelect.addEventListener('change', (e) => {
+          this.currentFilters.usageType = e.target.value;
+          this.updateFilters();
+        });
+      }
+
+      if (this.resetBtn) {
+        this.resetBtn.addEventListener('click', () => {
+          this.resetFilters();
+        });
+      }
+
+      if (this.clearBtn) {
+        this.clearBtn.addEventListener('click', () => {
+          this.resetFilters();
+        });
+      }
+
+      // Listen for TireSearchBySize events to sync values
+      document.addEventListener('tireSearchBySize', (e) => {
+        if (e.detail.clear) {
+          // Clear sidebar filters when tire search is cleared
+          this.resetFilters();
+        } else {
+          // Sync values from tire search to sidebar
+          this.syncFromTireSearch(e.detail);
+        }
+      });
+    }
+
+    syncFromTireSearch(detail) {
+      // Update sidebar values without triggering events to avoid loops
+      if (detail.width && this.widthSelect) {
+        this.widthSelect.value = detail.width;
+        this.currentFilters.width = detail.width;
+      }
+      if (detail.profile && this.profileSelect) {
+        this.profileSelect.value = detail.profile;
+        this.currentFilters.profile = detail.profile;
+      }
+      if (detail.rim && this.rimSelect) {
+        this.rimSelect.value = detail.rim;
+        this.currentFilters.rim = detail.rim;
+      }
+
+      // Dispatch sidebar filter event without syncing back to tire search
+      const filterEvent = new CustomEvent('sidebarFilters', {
+        detail: {
+          width: this.currentFilters.width,
+          profile: this.currentFilters.profile,
+          rim: this.currentFilters.rim,
+          usageType: this.currentFilters.usageType,
+          hasAnyFilter: this.hasAnyFilter(),
+          fromSync: true // Flag to prevent infinite loops
+        }
+      });
+      
+      document.dispatchEvent(filterEvent);
+    }
+
+    updateFilters(fromSync = false) {
+      // Dispatch event similar to tireSearchBySize but for sidebar filters
+      const filterEvent = new CustomEvent('sidebarFilters', {
+        detail: {
+          width: this.currentFilters.width,
+          profile: this.currentFilters.profile,
+          rim: this.currentFilters.rim,
+          usageType: this.currentFilters.usageType,
+          hasAnyFilter: this.hasAnyFilter(),
+          fromSync: fromSync
+        }
+      });
+      
+      document.dispatchEvent(filterEvent);
+
+      // Only sync with TireSearchBySize if this update didn't come from a sync
+      if (!fromSync) {
+        this.syncWithTireSearch();
+      }
+    }
+
+    syncWithTireSearch() {
+      if (window.tireSearchBySize && (this.currentFilters.width || this.currentFilters.profile || this.currentFilters.rim)) {
+        window.tireSearchBySize.setValues(
+          this.currentFilters.width,
+          this.currentFilters.profile,
+          this.currentFilters.rim
+        );
+      }
+    }
+
+    hasAnyFilter() {
+      return this.currentFilters.width || 
+             this.currentFilters.profile || 
+             this.currentFilters.rim ||
+             this.currentFilters.usageType;
+    }
+
+    resetFilters() {
+      if (this.widthSelect) this.widthSelect.value = '';
+      if (this.profileSelect) this.profileSelect.value = '';
+      if (this.rimSelect) this.rimSelect.value = '';
+      if (this.usageTypeSelect) this.usageTypeSelect.value = '';
+      
+      this.currentFilters = {
+        width: '',
+        profile: '',
+        rim: '',
+        usageType: ''
+      };
+
+      // Dispatch clear event
+      const clearEvent = new CustomEvent('sidebarFilters', {
+        detail: {
+          width: '',
+          profile: '',
+          rim: '',
+          usageType: '',
+          hasAnyFilter: false,
+          clear: true
+        }
+      });
+      
+      document.dispatchEvent(clearEvent);
+
+      // Also clear TireSearchBySize component
+      if (window.tireSearchBySize) {
+        window.tireSearchBySize.reset();
+      }
+    }
+
+    updateResultsCount(count) {
+      if (this.resultsCount) {
+        this.resultsCount.textContent = `${count} productos encontrados`;
+      }
+    }
+  }
+
+  // Initialize when DOM is ready
+  document.addEventListener('DOMContentLoaded', () => {
+    if (!window.catalogFilters) {
+      window.catalogFilters = new CatalogFilters();
+    }
+  });
+
+  // Listen for catalog filtered events to update results count
+  document.addEventListener('catalogFiltered', (e) => {
+    if (window.catalogFilters && e.detail) {
+      window.catalogFilters.updateResultsCount(e.detail.visibleCount);
+    }
+  });
+})();
+</script>

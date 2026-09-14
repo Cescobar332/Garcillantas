@@ -1,0 +1,130 @@
+---
+import Icon from "./Icon.astro";
+---
+
+<section class="why-us">
+    <div class="container">
+        <h2>¿Por qué elegir Garcillantas S.A.?</h2>
+        <div class="content">
+            <p>
+                En Garcillantas S.A., nos dedicamos a proteger su inversión y seguridad con servicios integrales y transparentes.
+            </p>
+            <p>
+                Confíe en Garcillantas S.A. para mantener su vehículo en óptimas condiciones, con seguridad, eficiencia y calidad garantizadas.
+            </p>
+        </div>
+        <ul class="features-list">
+            <li class="feature-item">
+               <Icon name="experiencia" class="icon-feature" size={60} color="var(--secondary-color)" />
+                <h3>Experiencia</h3>
+                <p>Más de <strong>70 años de experiencia</strong> en el mercado.</p>
+            </li>
+            <li class="feature-item">
+               <Icon name="tecnologia" class="icon-feature" size={60} color="var(--secondary-color)" />
+                <h3>Tecnología</h3>
+                <p>Equipos de <strong>última generación</strong> para diagnósticos precisos.</p>
+            </li>
+            <li class="feature-item">
+               <Icon name="certificado" class="icon-feature" size={60} color="var(--secondary-color)"/>
+                <h3>Personal Certificado</h3>
+                <p>Técnicos <strong>capacitados por marcas líderes</strong>.</p>
+            </li>
+            <li class="feature-item">
+               <Icon name="garantia" class="icon-feature" size={60} color="var(--secondary-color)" />
+                <h3>Garantía</h3>
+                <p>Productos y servicios con el <strong>respaldo de las mejores marcas</strong>.</p>
+            </li>
+            <li class="feature-item">
+               <Icon name="atencion" class="icon-feature" size={60} color="var(--secondary-color)"/>
+                <h3>Atención Personalizada</h3>
+                <p>Atención <strong>personalizada y eficaz</strong>.</p>
+            </li>
+        </ul>
+    </div>
+</section>
+
+<style>
+    .why-us {
+        padding: 4rem 0;
+        background: linear-gradient(rgba(255, 221, 0, 0), rgb(255, 221, 0));
+    }
+
+    .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 1rem;
+    }
+
+    h2 {
+        font-size: 3rem;
+        font-weight: bold;
+        text-align: center;
+        margin-bottom: 2rem;
+        font-family: var(--font-family-display);
+        color:var(--secondary-color);
+    }
+
+    .content {
+        max-width: 800px;
+        margin: 0 auto;
+        text-align: center;
+        color:#fff;
+    }
+
+    p {
+        margin-bottom: 1.5rem;
+    }
+
+    p:last-child {
+        margin-bottom: 0;
+    }
+
+    .features-list {
+        margin-top: 3rem;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        padding: 0;
+        list-style: none;
+    }
+
+    .feature-item {
+        text-align: center;
+        padding: 1.5rem;
+        border-radius: 8px;
+        background-color: var(--primary-color);
+        transition: transform 0.3s ease;
+        border: 1px solid var(--secondary-color);
+        cursor: crosshair;
+    }
+
+    .feature-item:hover {
+        transform: translateY(-10px) scale(1.05);
+    }
+
+    .icon-feature {
+        margin: 0 auto 1rem;
+        stroke-width: 1.5;
+        color: var(--secondary-color);
+        width: 48px;
+        height: 48px;
+        fill: var(--secondary-color);
+    }
+
+    h3 {
+        font-size: 1.5rem;
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+        color:var(--secondary-color);
+    }
+
+    .feature-item p {
+        margin: 0;
+        font-size: 0.95rem;
+        color:#fff;
+    }
+
+    strong {
+        color: var(--secondary-color);
+    }
+</style>

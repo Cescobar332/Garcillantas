@@ -1,0 +1,769 @@
+---
+import WhatsAppBtnPopup from './WhatsAppBtnPopup.astro';
+
+interface Props {
+  product: {
+    sys: { id: string };
+    fields: {
+      slug: string;
+      productName: string;
+      brand: string | string[];
+      model: string;
+      category: string | string[];
+      isFeatured?: boolean;
+      mainImage: Array<{
+        fields: {
+          file: {
+            url: string;
+          };
+        };
+      }>;
+      variants?: Array<{
+        fields: {
+          rimSize: number;
+          width: number;
+          aspectRatio: number;
+          tireType: string | string[];
+          seasonUsage: string | string[];
+          price?: number;
+          stock: number;
+        };
+      }>;
+    };
+  };
+  viewMode?: 'grid' | 'list';
+  showQuickView?: boolean;
+  lazyLoad?: boolean;
+}
+
+const { product, viewMode = 'grid', showQuickView = true, lazyLoad = true } = Astro.props;
+
+const variants = product.fields.variants ?? [];
+const prices = variants
+  .map(v => v.fields.price)
+  .filter((p): p is number => typeof p === 'number');
+const minPrice = prices.length ? Math.min(...prices) : null;
+const maxPrice = prices.length ? Math.max(...prices) : null;
+
+const brandLabel = Array.isArray(product.fields.brand)
+  ? product.fields.brand.join(', ')
+  : product.fields.brand;
+
+const categoryLabel = Array.isArray(product.fields.category)
+  ? product.fields.category.join(', ')
+  : product.fields.category;
+
+const mainImage = Array.isArray(product.fields.mainImage)
+  ? product.fields.mainImage[0]
+  : product.fields.mainImage;
+
+const rims = Array.from(new Set(
+  variants
+    .map(v => v.fields.rimSize)
+    .filter((r): r is number => typeof r === 'number')
+));
+
+const widths = Array.from(new Set(
+  variants
+    .map(v => v.fields.width)
+    .filter((w): w is number => typeof w === 'number')
+));
+
+const profiles = Array.from(new Set(
+  variants
+    .map(v => v.fields.aspectRatio)
+    .filter((p): p is number => typeof p === 'number')
+));
+
+const types = Array.from(new Set(
+  variants.flatMap(v =>
+    Array.isArray(v.fields.tireType)
+      ? v.fields.tireType
+      : (v.fields.tireType ? [v.fields.tireType] : [])
+  )
+));
+
+const seasons = Array.from(new Set(
+  variants.flatMap(v =>
+    Array.isArray(v.fields.seasonUsage)
+      ? v.fields.seasonUsage
+      : (v.fields.seasonUsage ? [v.fields.seasonUsage] : [])
+  )
+));
+
+const totalStock = variants.reduce((sum, v) => sum + (v.fields.stock || 0), 0);
+const availableVariants = variants.filter(v => v.fields.stock > 0).length;
+
+// Generate image URLs for different sizes with proper protocol
+const baseImageUrl = mainImage?.fields.file.url;
+const imageUrl = baseImageUrl ? (baseImageUrl.startsWith('//') ? `https:${baseImageUrl}` : baseImageUrl) : '';
+const imageUrlSmall = imageUrl ? `${imageUrl}?w=300&h=225&fit=pad` : '';
+const imageUrlMedium = imageUrl ? `${imageUrl}?w=400&h=300&fit=pad` : '';
+const imageUrlLarge = imageUrl ? `${imageUrl}?w=600&h=450&fit=pad` : '';
+---
+
+<article 
+  class={`product-card ${viewMode}`}
+  data-product-id={product.sys.id}
+  data-slug={product.fields.slug}
+  data-name={product.fields.productName.toLowerCase()}
+  data-display-name={product.fields.productName}
+  data-brand={brandLabel.toLowerCase()}
+  data-display-brand={brandLabel}
+  data-model={product.fields.model.toLowerCase()}
+  data-category={categoryLabel.toLowerCase()}
+  data-rims={rims.join(',')}
+  data-widths={widths.join(',')}
+  data-profiles={profiles.join(',')}
+  data-types={types.map(t => t.toLowerCase()).join(',')}
+  data-seasons={seasons.map(s => s.toLowerCase()).join(',')}
+  data-min-price={minPrice !== null ? minPrice : ''}
+  data-max-price={maxPrice !== null ? maxPrice : ''}
+  data-featured={product.fields.isFeatured ? 'true' : 'false'}
+  data-stock={totalStock}
+  data-image={imageUrlSmall}
+  data-variants={JSON.stringify(variants.map(v => ({
+    width: v.fields.width,
+    aspectRatio: v.fields.aspectRatio,
+    rimSize: v.fields.rimSize,
+    loadspeedIndex: v.fields.loadspeedIndex || '',
+    tireType: v.fields.tireType || '',
+    seasonUsage: v.fields.seasonUsage || '',
+    price: v.fields.price || 0,
+    stock: v.fields.stock
+  })))}
+>
+  <div class="card-content">
+    <div class="image-container">
+      <a href={`/catalogo/${product.fields.slug}`} class="image-link" aria-label={`Ver detalles de ${product.fields.productName}`}>
+        {imageUrl ? (
+          <picture class="product-image">
+            <source 
+              media="(max-width: 480px)" 
+              srcset={imageUrlSmall}
+              type="image/webp"
+            />
+            <source 
+              media="(max-width: 768px)" 
+              srcset={imageUrlMedium}
+              type="image/webp"
+            />
+            <img
+              src={imageUrlLarge}
+              alt={product.fields.productName}
+              loading={lazyLoad ? "lazy" : "eager"}
+              decoding="async"
+              width="400"
+              height="300"
+              class="product-img"
+              onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgdmlld0JveD0iMCAwIDQwMCAzMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0xNzUgMTI1SDE1MFYxNzVIMTc1VjEyNVoiIGZpbGw9IiM5Q0EzQUYiLz4KPHA+PC9wPgo8L3N2Zz4K'"
+            />
+          </picture>
+        ) : (
+          <div class="image-placeholder">
+            <svg width="80" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+              <circle cx="8.5" cy="8.5" r="1.5"/>
+              <polyline points="21,15 16,10 5,21"/>
+            </svg>
+            <span>Sin imagen</span>
+          </div>
+        )}
+        
+        {product.fields.isFeatured && (
+          <span class="badge-featured" aria-label="Producto destacado">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+            </svg>
+            Destacado
+          </span>
+        )}
+
+        {totalStock === 0 && (
+          <span class="badge-out-of-stock">Sin stock</span>
+        )}
+
+        {totalStock > 0 && totalStock <= 5 && (
+          <span class="badge-low-stock">Pocas unidades</span>
+        )}
+      </a>
+
+      <div class="card-actions">
+        {showQuickView && (
+          <button 
+            class="quick-view-btn" 
+            data-product-slug={product.fields.slug}
+            aria-label={`Vista rápida de ${product.fields.productName}`}
+            title="Vista rápida"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+          </button>
+        )}
+
+        <button 
+          class="favorite-btn" 
+          data-product-id={product.sys.id}
+          aria-label={`Agregar ${product.fields.productName} a favoritos`}
+          title="Agregar a favoritos"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+          </svg>
+        </button>
+
+        <button 
+          class="compare-btn" 
+          data-product-id={product.sys.id}
+          aria-label={`Comparar ${product.fields.productName}`}
+          title="Agregar a comparación"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 11H5a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2z"/>
+            <path d="M21 11h-4a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2z"/>
+            <path d="M7 21V8a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v13"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="product-info">
+      <div class="product-header">
+        <h3 class="product-title">
+          <a href={`/catalogo/${product.fields.slug}`} class="title-link">
+            {product.fields.productName}
+          </a>
+        </h3>
+        
+        <div class="product-meta">
+          <span class="brand">{brandLabel}</span>
+          <span class="separator">·</span>
+          <span class="model">{product.fields.model}</span>
+        </div>
+        
+        <div class="category">{categoryLabel}</div>
+      </div>
+
+      <div class="product-specs">
+        {rims.length > 0 && (
+          <div class="spec-item">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="spec-icon">
+              <circle cx="12" cy="12" r="10"/>
+              <circle cx="12" cy="12" r="6"/>
+              <circle cx="12" cy="12" r="2"/>
+            </svg>
+            <span class="spec-label">Rines:</span>
+            <span class="spec-value">{rims.sort((a, b) => a - b).join('", ')}"</span>
+          </div>
+        )}
+        
+        {widths.length > 0 && (
+          <div class="spec-item">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="spec-icon">
+              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+            </svg>
+            <span class="spec-label">Anchos:</span>
+            <span class="spec-value">{widths.sort((a, b) => a - b).join(', ')}</span>
+          </div>
+        )}
+        
+        {types.length > 0 && (
+          <div class="spec-item">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="spec-icon">
+              <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+              <path d="M2 17l10 5 10-5"/>
+              <path d="M2 12l10 5 10-5"/>
+            </svg>
+            <span class="spec-label">Tipo:</span>
+            <span class="spec-value">{types.slice(0, 2).join(', ')}{types.length > 2 ? ` +${types.length - 2}` : ''}</span>
+          </div>
+        )}
+        
+        <div class="spec-item availability">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="spec-icon">
+            <path d="M20 6L9 17l-5-5"/>
+          </svg>
+          <span class="spec-label">Disponibilidad:</span>
+          <span class="spec-value {totalStock > 5 ? 'in-stock' : totalStock > 0 ? 'low-stock' : 'out-of-stock'}">
+            {totalStock > 5 ? 'En stock' : totalStock > 0 ? `${totalStock} unidades` : 'Sin stock'}
+          </span>
+        </div>
+        
+        <div class="spec-item variants">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="spec-icon">
+            <path d="M3 3h18v18H3zM9 9h6v6H9z"/>
+          </svg>
+          <span class="spec-label">Variantes:</span>
+          <span class="spec-value">{availableVariants} de {variants.length}</span>
+        </div>
+      </div>
+
+      <div class="product-pricing">
+        {minPrice !== null && (
+          <div class="price-container">
+            {maxPrice && maxPrice !== minPrice ? (
+              <span class="price-range">
+                Desde <strong>${minPrice.toLocaleString('es-CO')}</strong>
+                <span class="price-max">hasta ${maxPrice.toLocaleString('es-CO')}</span>
+              </span>
+            ) : (
+              <span class="price-single">
+                <strong>${minPrice.toLocaleString('es-CO')}</strong>
+              </span>
+            )}
+          </div>
+        )}
+        
+        {totalStock > 0 && (
+          <div class="stock-info">
+            <span class="stock-indicator available"></span>
+            <span class="stock-text">En stock</span>
+          </div>
+        )}
+      </div>
+
+      <div class="product-actions-bottom">
+        <WhatsAppBtnPopup
+          text="Consultar precio"
+          message={`Hola, estoy interesado en ${product.fields.productName} - ${brandLabel} ${product.fields.model}`}
+          position="left"
+          variant="primary"
+        />
+        
+        <a 
+          href={`/catalogo/${product.fields.slug}`} 
+          class="view-details-btn"
+          aria-label={`Ver detalles completos de ${product.fields.productName}`}
+        >
+          Ver detalles
+        </a>
+      </div>
+    </div>
+  </div>
+</article>
+
+<style>
+  .product-card {
+    background: white;
+    border-radius: 1rem;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    height: fit-content;
+  }
+
+  .product-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+    border-color: rgba(13, 75, 160, 0.2);
+  }
+
+  .product-card.list {
+    display: flex;
+    flex-direction: row;
+    max-width: none;
+  }
+
+  .product-card.list .card-content {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+  }
+
+  .product-card.list .image-container {
+    flex: 0 0 280px;
+    height: 200px;
+  }
+
+  .product-card.list .product-info {
+    flex: 1;
+    padding: 1rem 1.5rem;
+  }
+
+  .card-content {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+
+  .image-container {
+    position: relative;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    background: white
+  }
+
+  .image-link {
+    display: block;
+    width: 100%;
+    height: 100%;
+    position: relative;
+  }
+
+  .product-image {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  .product-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    padding: 0.75rem;
+    transition: transform 0.3s ease;
+  }
+
+  .product-card:hover .product-img {
+    transform: scale(1.05);
+  }
+
+  .image-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: #f3f4f6;
+    color: #9ca3af;
+    gap: 0.5rem;
+  }
+
+  .image-placeholder svg {
+    opacity: 0.6;
+  }
+
+  .image-placeholder span {
+    font-size: 0.875rem;
+    font-weight: 500;
+  }
+
+  .product-card:hover .product-img {
+    transform: scale(1.05);
+  }
+
+  .badge-featured {
+    position: absolute;
+    top: 0.75rem;
+    left: 0.75rem;
+    background: linear-gradient(135deg, #1f2937, #374151);
+    color: white;
+    padding: 0.375rem 0.75rem;
+    border-radius: 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    z-index: 2;
+  }
+
+  .badge-out-of-stock {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    background: #ef4444;
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    z-index: 2;
+  }
+
+  .badge-low-stock {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    background: #f59e0b;
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    z-index: 2;
+  }
+
+  .card-actions {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    opacity: 0;
+    transform: translateX(10px);
+    transition: all 0.3s ease;
+    z-index: 3;
+  }
+
+  .product-card:hover .card-actions {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  .quick-view-btn,
+  .favorite-btn,
+  .compare-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255, 255, 255, 0.95);
+    color: #6b7280;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(10px);
+  }
+
+  .quick-view-btn:hover,
+  .favorite-btn:hover,
+  .compare-btn:hover {
+    background: var(--primary-color);
+    color: white;
+    transform: scale(1.1);
+  }
+
+  .favorite-btn.active {
+    background: #ef4444;
+    color: white;
+  }
+
+  .favorite-btn.active svg {
+    fill: currentColor;
+  }
+
+  .compare-btn.active {
+    background: var(--secondary-color);
+    color: var(--primary-color);
+  }
+
+  .compare-btn.active svg {
+    fill: currentColor;
+  }
+
+  .product-info {
+    padding: 1.25rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .product-header {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .product-title {
+    margin: 0;
+    font-size: 1.125rem;
+    font-weight: 600;
+    line-height: 1.4;
+  }
+
+  .title-link {
+    color: #1f2937;
+    text-decoration: none;
+    transition: color 0.2s ease;
+  }
+
+  .title-link:hover {
+    color: var(--primary-color);
+  }
+
+  .product-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: #6b7280;
+  }
+
+  .brand {
+    font-weight: 600;
+    color: #374151;
+  }
+
+  .separator {
+    color: #d1d5db;
+  }
+
+  .category {
+    font-size: 0.8rem;
+    color: #9ca3af;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 500;
+  }
+
+  .product-specs {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    font-size: 0.875rem;
+    color: #6b7280;
+    background: #f8fafc;
+    padding: 1rem;
+    border-radius: 0.75rem;
+    border: 1px solid #e2e8f0;
+  }
+
+  .spec-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.25rem 0;
+  }
+
+  .spec-icon {
+    color: var(--primary-color);
+    flex-shrink: 0;
+  }
+
+  .spec-label {
+    font-weight: 500;
+    color: #374151;
+    flex-shrink: 0;
+  }
+
+  .spec-value {
+    font-weight: 400;
+    margin-left: auto;
+    text-align: right;
+  }
+
+  .spec-value.in-stock {
+    color: #059669;
+    font-weight: 600;
+  }
+
+  .spec-value.low-stock {
+    color: #d97706;
+    font-weight: 600;
+  }
+
+  .spec-value.out-of-stock {
+    color: #dc2626;
+    font-weight: 600;
+  }
+
+  .product-pricing {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: auto;
+  }
+
+  .price-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .price-range,
+  .price-single {
+    font-size: 1rem;
+    color: var(--primary-color);
+  }
+
+  .price-range strong,
+  .price-single strong {
+    font-weight: 700;
+    font-size: 1.125rem;
+  }
+
+  .price-max {
+    font-size: 0.875rem;
+    color: #6b7280;
+    display: block;
+    margin-top: 0.125rem;
+  }
+
+  .stock-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+  }
+
+  .stock-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+  }
+
+  .stock-indicator.available {
+    background: #10b981;
+  }
+
+  .stock-text {
+    color: #059669;
+    font-weight: 500;
+  }
+
+  .product-actions-bottom {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1rem;
+  }
+
+  .view-details-btn {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--primary-color);
+    border-radius: 0.5rem;
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.875rem;
+    text-align: center;
+    transition: all 0.2s ease;
+  }
+
+  .view-details-btn:hover {
+    background: var(--primary-color);
+    color: white;
+  }
+
+  @media (max-width: 768px) {
+    .product-card.list {
+      flex-direction: column;
+    }
+
+    .product-card.list .card-content {
+      flex-direction: column;
+    }
+
+    .product-card.list .image-container {
+      flex: none;
+      aspect-ratio: 4 / 3;
+      height: auto;
+    }
+
+    .card-actions {
+      position: static;
+      flex-direction: row;
+      justify-content: center;
+      opacity: 1;
+      transform: none;
+      margin-top: 1rem;
+    }
+
+    .product-actions-bottom {
+      flex-direction: column;
+    }
+  }
+</style>

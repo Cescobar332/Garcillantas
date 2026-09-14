@@ -1,0 +1,22 @@
+:root {
+  /* Colors */
+  --primary-color:#0D4BA0;
+  --secondary-color:#FFDD00; 
+  --foreground-color:#313131;
+  --background-color:#ffffff;
+  /* --gradient-background: hsl(212, 85%, 27%) radial-gradient(circle,hsl(212, 85%, 41%) 0%,  hsl(215, 85%, 41%) 30%,  hsl(215, 85%, 61%) 50%, #0D4BA0 120%); */
+  --gradient-background: hsl(212, 85%, 27%) radial-gradient(circle,hsl(212, 85%, 41%) 0%,  hsl(215, 85%, 41%) 30%,  hsl(215, 85%, 61%) 50%, #0D4BA0 120%);
+  
+  /* Typography */
+  --font-family: 'Eurostile', sans-serif;
+  
+  /* Spacing */
+  --spacing-sm: 1rem;
+  --spacing-md: 2rem;
+  --spacing-lg: 5rem;
+  
+  /* Container */
+  --max-width: 1300px;
+  --color-text: #3e3e3e;
+  --flicker: 100%;
+}

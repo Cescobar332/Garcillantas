@@ -1,0 +1,2098 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import CatalogFilters from '@/components/CatalogFilters.astro';
+import AdvancedSearch from '@/components/AdvancedSearch.astro';
+import TireSearchBySize from '@/components/TireSearchBySize.astro';
+import CatalogControls from '@/components/CatalogControls.astro';
+import CatalogPagination from '@/components/CatalogPagination.astro';
+import ProductCard from '@/components/ProductCard.astro';
+import QuickViewProduct from '@/components/QuickViewProduct.astro';
+import { getAllProducts, type Product } from '@/lib/contentful';
+
+const title = 'Catálogo de Productos | Garcillantas';
+const description = 'Explora nuestro catálogo completo de llantas con filtros avanzados, búsqueda inteligente y comparación de productos.';
+
+const products = await getAllProducts();
+
+// Extract filter options for simplified filters
+const allRims = Array.from(new Set(
+  products.flatMap((p: Product) => (p.fields.variants ?? []).map(v => v.fields.rimSize))
+)).filter((v): v is number => typeof v === 'number').sort((a, b) => a - b);
+
+const allWidths = Array.from(new Set(
+  products.flatMap((p: Product) => (p.fields.variants ?? []).map(v => v.fields.width))
+)).filter((v): v is number => typeof v === 'number').sort((a, b) => a - b);
+
+const allProfiles = Array.from(new Set(
+  products.flatMap((p: Product) => (p.fields.variants ?? []).map(v => v.fields.aspectRatio))
+)).filter((v): v is number => typeof v === 'number').sort((a, b) => a - b);
+
+const allUsageTypes = Array.from(new Set(
+  products.flatMap((p: Product) => (p.fields.variants ?? [])
+    .flatMap(v => Array.isArray(v.fields.seasonUsage) ? v.fields.seasonUsage : (v.fields.seasonUsage ? [v.fields.seasonUsage] : [])))
+)).sort();
+---
+
+<Layout title={title} description={description}>
+  <div class="catalog-page">
+    <!-- Hero Section -->
+    <section class="catalog-hero">
+      <div class="hero-content">
+        <h1>Catálogo de Productos</h1>
+        <p class="hero-description">
+          Encuentra la llanta perfecta para tu vehículo con nuestro sistema de búsqueda avanzada
+        </p>
+        
+        <!-- Search Components -->
+        <div class="hero-search">
+          <div class="search-tabs">
+            <button class="search-tab" data-tab="advanced">Búsqueda General</button>
+            <button class="search-tab active" data-tab="size">Búsqueda por Medida</button>
+          </div>
+          
+          <div class="search-content">
+            <div class="search-panel" id="advanced-panel">
+              <AdvancedSearch products={products} />
+            </div>
+            <div class="search-panel active" id="size-panel">
+              <TireSearchBySize products={products} showTitle={false} />
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Main Catalog Section -->
+    <section class="catalog-main">
+      <div class="catalog-container">
+        
+        <!-- Filters Sidebar -->
+        <aside class="filters-sidebar">
+          <CatalogFilters 
+            allRims={allRims}
+            allWidths={allWidths}
+            allProfiles={allProfiles}
+            allUsageTypes={allUsageTypes}
+            totalProducts={products.length}
+          />
+        </aside>
+
+        <!-- Products Section -->
+        <main class="products-section">
+          <!-- Catalog Controls -->
+          <CatalogControls totalProducts={products.length} />
+
+          <!-- Products Grid -->
+          <div class="catalog-grid view-grid" id="catalog-grid">
+            {products.map((product: Product) => (
+              <ProductCard 
+                product={product} 
+                viewMode="grid" 
+                showQuickView={true}
+                lazyLoad={true}
+              />
+            ))}
+          </div>
+
+          <!-- Empty State -->
+          <div class="empty-state" id="empty-state" style="display: none;">
+            <div class="empty-content">
+              <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <circle cx="11" cy="11" r="8"/>
+                <path d="m21 21-4.35-4.35"/>
+              </svg>
+              <h3>No se encontraron productos</h3>
+              <p>Intenta ajustar los filtros o realizar una búsqueda diferente</p>
+              <button class="clear-filters-btn" onclick="clearAllFilters()">
+                Limpiar todos los filtros
+              </button>
+            </div>
+          </div>
+
+          <!-- Loading State -->
+          <div class="loading-state" id="loading-state" style="display: none;">
+            <div class="loading-content">
+              <div class="loading-spinner"></div>
+              <p>Cargando productos...</p>
+            </div>
+          </div>
+
+          <!-- Pagination -->
+          <CatalogPagination totalProducts={products.length} />
+        </main>
+      </div>
+    </section>
+
+    <!-- Quick View Modal -->
+    <QuickViewProduct />
+
+    <!-- Floating Action Buttons -->
+    <div class="floating-actions">
+      <button class="fab compare-fab" id="compare-fab" style="display: none;">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 11H5a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2z"/>
+          <path d="M21 11h-4a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2z"/>
+          <path d="M7 21V8a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v13"/>
+        </svg>
+        <span class="fab-label">Comparar (<span id="compare-count">0</span>)</span>
+      </button>
+
+      <button class="fab favorites-fab" id="favorites-fab" style="display: none;">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+        </svg>
+        <span class="fab-label">Favoritos (<span id="favorites-count">0</span>)</span>
+      </button>
+    </div>
+  </div>
+</Layout>
+
+<script>
+// Catalog Management System
+class CatalogManager {
+  constructor() {
+    this.products = [];
+    this.filteredProducts = [];
+    this.currentFilters = {};
+    this.currentSort = 'relevance';
+    this.currentView = 'grid';
+    this.currentPage = 1;
+    this.itemsPerPage = 24;
+    this.favorites = this.loadFavorites();
+    this.compareList = this.loadCompareList();
+    
+    this.init();
+  }
+
+  init() {
+    this.loadProducts();
+    this.setupEventListeners();
+    this.updateFavoriteButtons();
+    this.updateCompareButtons();
+    this.updateFabVisibility();
+  }
+
+  loadProducts() {
+    const productCards = document.querySelectorAll('.product-card');
+    this.products = Array.from(productCards).map(card => ({
+      element: card,
+      id: card.dataset.productId,
+      slug: card.dataset.slug,
+      name: card.dataset.displayName || card.dataset.name,
+      brand: card.dataset.displayBrand || card.dataset.brand,
+      model: card.dataset.model,
+      category: card.dataset.category,
+      image: card.dataset.image || '',
+      rims: card.dataset.rims ? card.dataset.rims.split(',') : [],
+      widths: card.dataset.widths ? card.dataset.widths.split(',') : [],
+      types: card.dataset.types ? card.dataset.types.split(',') : [],
+      seasons: card.dataset.seasons ? card.dataset.seasons.split(',') : [],
+      minPrice: card.dataset.minPrice ? parseFloat(card.dataset.minPrice) : null,
+      maxPrice: card.dataset.maxPrice ? parseFloat(card.dataset.maxPrice) : null,
+      featured: card.dataset.featured === 'true',
+      stock: parseInt(card.dataset.stock) || 0
+    }));
+    
+    this.filteredProducts = [...this.products];
+    this.applyFiltersAndSort();
+  }
+
+  setupEventListeners() {
+    // Filter events
+    document.addEventListener('catalogSearch', (e) => {
+      this.currentFilters.search = e.detail.query;
+      this.applyFiltersAndSort();
+    });
+
+    // Tire search by size events
+    document.addEventListener('tireSearchBySize', (e) => {
+      console.log('CatalogManager: Received tireSearchBySize event:', e.detail);
+      
+      if (e.detail.clear) {
+        // Clear tire search filters
+        this.currentFilters.tireWidth = '';
+        this.currentFilters.tireProfile = '';
+        this.currentFilters.tireRim = '';
+        this.currentFilters.tireSearch = '';
+        console.log('CatalogManager: Cleared tire search filters');
+      } else {
+        // Set tire search filters
+        this.currentFilters.tireWidth = e.detail.width;
+        this.currentFilters.tireProfile = e.detail.profile;
+        this.currentFilters.tireRim = e.detail.rim;
+        this.currentFilters.tireSearch = e.detail.query;
+        console.log('CatalogManager: Set tire search filters:', {
+          width: this.currentFilters.tireWidth,
+          profile: this.currentFilters.tireProfile,
+          rim: this.currentFilters.tireRim,
+          query: this.currentFilters.tireSearch
+        });
+      }
+      this.applyFiltersAndSort();
+    });
+
+    // Sidebar filters events
+    document.addEventListener('sidebarFilters', (e) => {
+      console.log('CatalogManager: Received sidebarFilters event:', e.detail);
+      
+      if (e.detail.clear) {
+        // Clear sidebar filters
+        this.currentFilters.sidebarWidth = '';
+        this.currentFilters.sidebarProfile = '';
+        this.currentFilters.sidebarRim = '';
+        this.currentFilters.sidebarUsageType = '';
+        console.log('CatalogManager: Cleared sidebar filters');
+      } else {
+        // Set sidebar filters
+        this.currentFilters.sidebarWidth = e.detail.width;
+        this.currentFilters.sidebarProfile = e.detail.profile;
+        this.currentFilters.sidebarRim = e.detail.rim;
+        this.currentFilters.sidebarUsageType = e.detail.usageType;
+        console.log('CatalogManager: Set sidebar filters:', {
+          width: this.currentFilters.sidebarWidth,
+          profile: this.currentFilters.sidebarProfile,
+          rim: this.currentFilters.sidebarRim,
+          usageType: this.currentFilters.sidebarUsageType
+        });
+      }
+      this.applyFiltersAndSort();
+    });
+
+    // Sort and view events
+    document.addEventListener('sortChanged', (e) => {
+      this.currentSort = e.detail.sort;
+      this.applyFiltersAndSort();
+    });
+
+    document.addEventListener('viewModeChanged', (e) => {
+      this.currentView = e.detail.view;
+      this.updateView();
+    });
+
+    document.addEventListener('itemsPerPageChanged', (e) => {
+      this.itemsPerPage = e.detail.itemsPerPage;
+      this.currentPage = 1;
+      this.applyPagination();
+    });
+
+    document.addEventListener('paginationChanged', (e) => {
+      this.currentPage = e.detail.page;
+      this.applyPagination();
+    });
+
+    // Product interaction events
+    document.addEventListener('click', (e) => {
+      const quickViewBtn = e.target.closest('.quick-view-btn');
+      const favoriteBtn = e.target.closest('.favorite-btn');
+      const compareBtn = e.target.closest('.compare-btn');
+
+      if (quickViewBtn) {
+        this.openQuickView(quickViewBtn.dataset.productSlug);
+      } else if (favoriteBtn) {
+        this.toggleFavorite(favoriteBtn.dataset.productId);
+      } else if (compareBtn) {
+        this.toggleCompare(compareBtn.dataset.productId);
+      }
+    });
+
+    // Listen for favorites/compare updates from QuickViewProduct
+    document.addEventListener('favoritesUpdated', (e) => {
+      this.favorites = e.detail.favorites;
+      this.updateFavoriteButtons();
+      this.updateFabVisibility();
+    });
+
+    document.addEventListener('compareListUpdated', (e) => {
+      this.compareList = e.detail.compareList;
+      this.updateCompareButtons();
+      this.updateFabVisibility();
+    });
+
+    // FAB button event listeners
+    const favoritesFab = document.getElementById('favorites-fab');
+    const compareFab = document.getElementById('compare-fab');
+
+    if (favoritesFab) {
+      favoritesFab.addEventListener('click', () => {
+        this.showFavoritesPanel();
+      });
+    }
+
+    if (compareFab) {
+      compareFab.addEventListener('click', () => {
+        this.showComparisonPanel();
+      });
+    }
+  }
+
+  applyFiltersAndSort() {
+    // Apply filters
+    this.filteredProducts = this.products.filter(product => {
+      // Enhanced search filter
+      if (this.currentFilters.search) {
+        const searchTerm = this.currentFilters.search.toLowerCase().trim();
+        
+        // Basic search fields
+        const basicFields = [
+          product.name,
+          product.brand,
+          product.model,
+          product.category
+        ].filter(field => field).join(' ').toLowerCase();
+        
+        // Tire dimension fields
+        const dimensionFields = [
+          ...product.rims.map(rim => `${rim}"`),
+          ...product.rims.map(rim => `R${rim}`),
+          ...product.rims.map(rim => `Rin ${rim}`),
+          ...product.widths,
+          ...product.types,
+          ...product.seasons
+        ].join(' ').toLowerCase();
+        
+        // Combined search string
+        const allSearchFields = `${basicFields} ${dimensionFields}`;
+        
+        // Check for direct match
+        if (allSearchFields.includes(searchTerm)) return true;
+        
+        // Check for fuzzy tire dimension match (e.g., "225 60 16" should match "225/60R16")
+        if (/^\d+[\s\/]*\d*[\s\/]*\d*$/.test(searchTerm)) {
+          const normalizedSearch = searchTerm.replace(/[\s\/]+/g, '/');
+          const normalizedFields = allSearchFields.replace(/[r\s]/g, '/');
+          if (normalizedFields.includes(normalizedSearch)) return true;
+        }
+        
+        // Check individual words for partial matching
+        const searchWords = searchTerm.split(/\s+/);
+        const hasAllWords = searchWords.every((word: string) => 
+          word.length > 0 && allSearchFields.includes(word)
+        );
+        
+        if (!hasAllWords) return false;
+      }
+
+      // Tire search by size filters (from hero section)
+      if (this.currentFilters.tireWidth || this.currentFilters.tireProfile || this.currentFilters.tireRim) {
+        console.log('CatalogManager: Filtering product:', product.name, 'with tire filters:', {
+          width: this.currentFilters.tireWidth,
+          profile: this.currentFilters.tireProfile,
+          rim: this.currentFilters.tireRim
+        });
+        
+        let matchesTireSearch = false;
+        
+        // Check using data attributes (simpler and more reliable)
+        let attributeMatch = true;
+        
+        if (this.currentFilters.tireWidth) {
+          const widths = product.element.dataset.widths ? product.element.dataset.widths.split(',') : [];
+          console.log('Product widths:', widths, 'Looking for:', this.currentFilters.tireWidth);
+          if (!widths.includes(this.currentFilters.tireWidth)) {
+            attributeMatch = false;
+          }
+        }
+        
+        if (this.currentFilters.tireProfile && attributeMatch) {
+          const profiles = product.element.dataset.profiles ? product.element.dataset.profiles.split(',') : [];
+          console.log('Product profiles:', profiles, 'Looking for:', this.currentFilters.tireProfile);
+          if (!profiles.includes(this.currentFilters.tireProfile)) {
+            attributeMatch = false;
+          }
+        }
+        
+        if (this.currentFilters.tireRim && attributeMatch) {
+          const rims = product.element.dataset.rims ? product.element.dataset.rims.split(',') : [];
+          console.log('Product rims:', rims, 'Looking for:', this.currentFilters.tireRim);
+          if (!rims.includes(this.currentFilters.tireRim)) {
+            attributeMatch = false;
+          }
+        }
+        
+        matchesTireSearch = attributeMatch;
+        console.log('Product match result:', matchesTireSearch);
+        
+        if (!matchesTireSearch) {
+          return false;
+        }
+      }
+
+      // Sidebar filters
+      if (this.currentFilters.sidebarWidth || this.currentFilters.sidebarProfile || this.currentFilters.sidebarRim || this.currentFilters.sidebarUsageType) {
+        console.log('CatalogManager: Filtering product:', product.name, 'with sidebar filters:', {
+          width: this.currentFilters.sidebarWidth,
+          profile: this.currentFilters.sidebarProfile,
+          rim: this.currentFilters.sidebarRim,
+          usageType: this.currentFilters.sidebarUsageType
+        });
+        
+        let sidebarMatch = true;
+        
+        if (this.currentFilters.sidebarWidth) {
+          const widths = product.element.dataset.widths ? product.element.dataset.widths.split(',') : [];
+          if (!widths.includes(this.currentFilters.sidebarWidth)) {
+            sidebarMatch = false;
+          }
+        }
+        
+        if (this.currentFilters.sidebarProfile && sidebarMatch) {
+          const profiles = product.element.dataset.profiles ? product.element.dataset.profiles.split(',') : [];
+          if (!profiles.includes(this.currentFilters.sidebarProfile)) {
+            sidebarMatch = false;
+          }
+        }
+        
+        if (this.currentFilters.sidebarRim && sidebarMatch) {
+          const rims = product.element.dataset.rims ? product.element.dataset.rims.split(',') : [];
+          if (!rims.includes(this.currentFilters.sidebarRim)) {
+            sidebarMatch = false;
+          }
+        }
+
+        if (this.currentFilters.sidebarUsageType && sidebarMatch) {
+          const seasons = product.element.dataset.seasons ? product.element.dataset.seasons.split(',') : [];
+          if (!seasons.includes(this.currentFilters.sidebarUsageType)) {
+            sidebarMatch = false;
+          }
+        }
+        
+        console.log('Sidebar filter match result:', sidebarMatch);
+        
+        if (!sidebarMatch) {
+          return false;
+        }
+      }
+
+      // Other filters would be applied here
+      return true;
+    });
+
+    // Apply sorting
+    this.sortProducts();
+    
+    // Update display
+    this.updateProductDisplay();
+    this.applyPagination();
+    
+    // Dispatch event for other components
+    document.dispatchEvent(new CustomEvent('catalogFiltered', {
+      detail: {
+        visibleCount: this.filteredProducts.length,
+        totalCount: this.products.length
+      }
+    }));
+    
+    // Dispatch tire search results count
+    document.dispatchEvent(new CustomEvent('tireSearchResults', {
+      detail: {
+        count: this.filteredProducts.length
+      }
+    }));
+  }
+
+  sortProducts() {
+    this.filteredProducts.sort((a, b) => {
+      switch (this.currentSort) {
+        case 'name-asc':
+          return a.name.localeCompare(b.name);
+        case 'name-desc':
+          return b.name.localeCompare(a.name);
+        case 'price-asc':
+          return (a.minPrice || 0) - (b.minPrice || 0);
+        case 'price-desc':
+          return (b.maxPrice || 0) - (a.maxPrice || 0);
+        case 'brand-asc':
+          return a.brand.localeCompare(b.brand);
+        case 'brand-desc':
+          return b.brand.localeCompare(a.brand);
+        case 'featured':
+          return b.featured - a.featured;
+        case 'newest':
+          // Would need creation date from Contentful
+          return 0;
+        default:
+          return 0;
+      }
+    });
+  }
+
+  updateProductDisplay() {
+    const catalogGrid = document.getElementById('catalog-grid');
+    const emptyState = document.getElementById('empty-state');
+    
+    // First, hide all products
+    this.products.forEach(product => {
+      product.element.style.display = 'none';
+    });
+    
+    if (this.filteredProducts.length === 0) {
+      catalogGrid.style.display = 'none';
+      emptyState.style.display = 'flex';
+    } else {
+      catalogGrid.style.display = 'grid';
+      emptyState.style.display = 'none';
+      
+      // Show only filtered products
+      this.filteredProducts.forEach(product => {
+        product.element.style.display = '';
+      });
+    }
+  }
+
+  applyPagination() {
+    // First, hide all products
+    this.products.forEach(product => {
+      product.element.style.display = 'none';
+    });
+
+    if (this.filteredProducts.length === 0) {
+      return;
+    }
+
+    if (this.itemsPerPage === 'all') {
+      // Show all filtered products
+      this.filteredProducts.forEach(product => {
+        product.element.style.display = '';
+      });
+      return;
+    }
+
+    // Apply pagination to filtered products
+    const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+    const endIndex = startIndex + this.itemsPerPage;
+
+    this.filteredProducts.forEach((product, index) => {
+      product.element.style.display = (index >= startIndex && index < endIndex) ? '' : 'none';
+    });
+  }
+
+  updateView() {
+    const catalogGrid = document.getElementById('catalog-grid');
+    catalogGrid.className = `catalog-grid view-${this.currentView}`;
+    
+    this.products.forEach(product => {
+      product.element.className = `product-card ${this.currentView}`;
+    });
+  }
+
+  toggleFavorite(productId) {
+    const index = this.favorites.indexOf(productId);
+    if (index > -1) {
+      this.favorites.splice(index, 1);
+    } else {
+      this.favorites.push(productId);
+    }
+    
+    this.saveFavorites();
+    this.updateFavoriteButtons();
+    this.updateFabVisibility();
+  }
+
+  toggleCompare(productId) {
+    const index = this.compareList.indexOf(productId);
+    if (index > -1) {
+      this.compareList.splice(index, 1);
+    } else if (this.compareList.length < 4) {
+      this.compareList.push(productId);
+    } else {
+      alert('Máximo 4 productos para comparar');
+      return;
+    }
+    
+    this.saveCompareList();
+    this.updateCompareButtons();
+    this.updateFabVisibility();
+  }
+
+  updateFavoriteButtons() {
+    document.querySelectorAll('.favorite-btn').forEach(btn => {
+      const productId = btn.dataset.productId;
+      btn.classList.toggle('active', this.favorites.includes(productId));
+    });
+  }
+
+  updateCompareButtons() {
+    document.querySelectorAll('.compare-btn').forEach(btn => {
+      const productId = btn.dataset.productId;
+      btn.classList.toggle('active', this.compareList.includes(productId));
+    });
+  }
+
+  updateFabVisibility() {
+    const compareCount = document.getElementById('compare-count');
+    const favoritesCount = document.getElementById('favorites-count');
+    const compareFab = document.getElementById('compare-fab');
+    const favoritesFab = document.getElementById('favorites-fab');
+
+    compareCount.textContent = this.compareList.length;
+    favoritesCount.textContent = this.favorites.length;
+
+    compareFab.style.display = this.compareList.length > 0 ? 'flex' : 'none';
+    favoritesFab.style.display = this.favorites.length > 0 ? 'flex' : 'none';
+  }
+
+  loadFavorites() {
+    try {
+      return JSON.parse(localStorage.getItem('garcillantas_favorites') || '[]');
+    } catch {
+      return [];
+    }
+  }
+
+  saveFavorites() {
+    try {
+      localStorage.setItem('garcillantas_favorites', JSON.stringify(this.favorites));
+    } catch {
+      // Handle errors silently
+    }
+  }
+
+  loadCompareList() {
+    try {
+      return JSON.parse(localStorage.getItem('garcillantas_compare') || '[]');
+    } catch {
+      return [];
+    }
+  }
+
+  saveCompareList() {
+    try {
+      localStorage.setItem('garcillantas_compare', JSON.stringify(this.compareList));
+    } catch {
+      // Handle errors silently
+    }
+  }
+
+  // Show favorites panel/modal
+  showFavoritesPanel() {
+    const favoriteProducts = this.products.filter(p => this.favorites.includes(p.id));
+    
+    if (favoriteProducts.length === 0) {
+      alert('No hay productos en favoritos');
+      return;
+    }
+
+    // Create and show favorites modal
+    let modal = document.getElementById('favorites-modal');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'favorites-modal';
+      modal.className = 'favorites-modal';
+      document.body.appendChild(modal);
+    }
+
+    const whatsappNumber = '573174406744'; // Número de WhatsApp de Garcillantas
+    const productsList = favoriteProducts.map(p => {
+      const whatsappMessage = encodeURIComponent(`Hola, me interesa consultar el precio de: ${p.name} (${p.brand} - ${p.model})`);
+      const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${whatsappMessage}`;
+      
+      return `
+      <div class="favorite-item" data-product-id="${p.id}">
+        <div class="favorite-item-image">
+          ${p.image ? `<img src="${p.image}" alt="${p.name}" loading="lazy" />` : `
+            <div class="favorite-item-no-image">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                <circle cx="8.5" cy="8.5" r="1.5"/>
+                <polyline points="21,15 16,10 5,21"/>
+              </svg>
+            </div>
+          `}
+        </div>
+        <div class="favorite-item-content">
+          <div class="favorite-item-info">
+            <strong>${p.name}</strong>
+            <span>${p.brand} - ${p.model}</span>
+          </div>
+          <div class="favorite-item-actions">
+            <a href="${whatsappUrl}" target="_blank" rel="noopener noreferrer" class="favorite-whatsapp-btn">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+              </svg>
+              Consultar
+            </a>
+            <a href="/catalogo/${p.slug}" class="favorite-view-btn">Ver</a>
+            <button class="favorite-remove-btn" onclick="window.catalogManager.removeFavorite('${p.id}')">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    `}).join('');
+
+    modal.innerHTML = `
+      <div class="favorites-modal-overlay" onclick="window.catalogManager.closeFavoritesPanel()"></div>
+      <div class="favorites-modal-content">
+        <div class="favorites-modal-header">
+          <h3>Mis Favoritos (${favoriteProducts.length})</h3>
+          <button class="favorites-modal-close" onclick="window.catalogManager.closeFavoritesPanel()">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+        <div class="favorites-modal-body">
+          ${productsList}
+        </div>
+        <div class="favorites-modal-footer">
+          <button class="favorites-clear-btn" onclick="window.catalogManager.clearAllFavorites()">
+            Limpiar todos
+          </button>
+        </div>
+      </div>
+    `;
+
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+  }
+
+  closeFavoritesPanel() {
+    const modal = document.getElementById('favorites-modal');
+    if (modal) {
+      modal.classList.remove('active');
+      document.body.style.overflow = '';
+    }
+  }
+
+  removeFavorite(productId) {
+    this.toggleFavorite(productId);
+    // Re-render the panel if it's open
+    const modal = document.getElementById('favorites-modal');
+    if (modal && modal.classList.contains('active')) {
+      if (this.favorites.length > 0) {
+        this.showFavoritesPanel();
+      } else {
+        this.closeFavoritesPanel();
+      }
+    }
+  }
+
+  clearAllFavorites() {
+    this.favorites = [];
+    this.saveFavorites();
+    this.updateFavoriteButtons();
+    this.updateFabVisibility();
+    this.closeFavoritesPanel();
+  }
+
+  // Show comparison panel/modal
+  showComparisonPanel() {
+    const compareProducts = this.products.filter(p => this.compareList.includes(p.id));
+    
+    if (compareProducts.length === 0) {
+      alert('No hay productos para comparar');
+      return;
+    }
+
+    // Create and show comparison modal
+    let modal = document.getElementById('comparison-modal');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'comparison-modal';
+      modal.className = 'comparison-modal';
+      document.body.appendChild(modal);
+    }
+
+    const whatsappNumber = '573174406744';
+
+    const productsList = compareProducts.map(p => {
+      // Get variants data from the product element
+      const variantsData = p.element.dataset.variants ? JSON.parse(p.element.dataset.variants) : [];
+      const profiles = p.element.dataset.profiles ? p.element.dataset.profiles.split(',') : [];
+      const types = p.types || [];
+      const seasons = p.seasons || [];
+      const category = p.element.dataset.category || '';
+      
+      // Build variants table rows
+      const variantsRows = variantsData.map(v => {
+        const whatsappMessage = encodeURIComponent(`Hola, me interesa: ${p.name} (${p.brand} ${p.model}) - Medida: ${v.width}/${v.aspectRatio}R${v.rimSize}. ¿Podrían darme información sobre disponibilidad y precio?`);
+        const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${whatsappMessage}`;
+        
+        return `
+          <tr>
+            <td>${v.width}/${v.aspectRatio}R${v.rimSize}</td>
+            <td>${v.loadspeedIndex || '-'}</td>
+            <td>${v.stock > 0 ? `<span class="stock-available">${v.stock}</span>` : '<span class="stock-out">0</span>'}</td>
+            <td>
+              <a href="${whatsappUrl}" target="_blank" rel="noopener noreferrer" class="compare-whatsapp-btn">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                </svg>
+                Consultar
+              </a>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      const whatsappGeneralMessage = encodeURIComponent(`Hola, me interesa consultar sobre: ${p.name} (${p.brand} ${p.model}). ¿Podrían darme más información?`);
+      const whatsappGeneralUrl = `https://wa.me/${whatsappNumber}?text=${whatsappGeneralMessage}`;
+
+      return `
+        <div class="compare-product-card" data-product-id="${p.id}">
+          <button class="compare-remove-btn" onclick="window.catalogManager.removeFromCompare('${p.id}')">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+          
+          <div class="compare-product-header">
+            <div class="compare-product-image">
+              ${p.image ? `<img src="${p.image}" alt="${p.name}" loading="lazy" />` : `
+                <div class="compare-no-image">
+                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                    <circle cx="8.5" cy="8.5" r="1.5"/>
+                    <polyline points="21,15 16,10 5,21"/>
+                  </svg>
+                </div>
+              `}
+            </div>
+            <div class="compare-product-title">
+              <h4>${p.name}</h4>
+              <span class="compare-brand-badge">${p.brand}</span>
+            </div>
+          </div>
+
+          <div class="compare-specs">
+            <div class="compare-spec-row">
+              <span class="compare-spec-label">Modelo:</span>
+              <span class="compare-spec-value">${p.model}</span>
+            </div>
+            <div class="compare-spec-row">
+              <span class="compare-spec-label">Categoría:</span>
+              <span class="compare-spec-value">${category}</span>
+            </div>
+            <div class="compare-spec-row">
+              <span class="compare-spec-label">Rines:</span>
+              <span class="compare-spec-value">${p.rims.length > 0 ? p.rims.join('", ') + '"' : '-'}</span>
+            </div>
+            <div class="compare-spec-row">
+              <span class="compare-spec-label">Anchos:</span>
+              <span class="compare-spec-value">${p.widths.length > 0 ? p.widths.join(', ') : '-'}</span>
+            </div>
+            <div class="compare-spec-row">
+              <span class="compare-spec-label">Perfiles:</span>
+              <span class="compare-spec-value">${profiles.length > 0 ? profiles.join(', ') : '-'}</span>
+            </div>
+            <div class="compare-spec-row">
+              <span class="compare-spec-label">Tipo:</span>
+              <span class="compare-spec-value">${types.length > 0 ? types.join(', ') : '-'}</span>
+            </div>
+            <div class="compare-spec-row">
+              <span class="compare-spec-label">Uso/Temporada:</span>
+              <span class="compare-spec-value">${seasons.length > 0 ? seasons.join(', ') : '-'}</span>
+            </div>
+          </div>
+
+          <div class="compare-variants-section">
+            <h5>Dimensiones Disponibles</h5>
+            ${variantsData.length > 0 ? `
+              <div class="compare-variants-table-wrapper">
+                <table class="compare-variants-table">
+                  <thead>
+                    <tr>
+                      <th>Medida</th>
+                      <th>Índice</th>
+                      <th>Stock</th>
+                      <th>Acción</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${variantsRows}
+                  </tbody>
+                </table>
+              </div>
+            ` : '<p class="no-variants">No hay dimensiones disponibles</p>'}
+          </div>
+
+          <div class="compare-actions">
+            <a href="${whatsappGeneralUrl}" target="_blank" rel="noopener noreferrer" class="compare-consult-btn">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+              </svg>
+              Consultar Precio General
+            </a>
+            <a href="/catalogo/${p.slug}" class="compare-details-btn">Ver Detalles Completos</a>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    modal.innerHTML = `
+      <div class="comparison-modal-overlay" onclick="window.catalogManager.closeComparisonPanel()"></div>
+      <div class="comparison-modal-content comparison-modal-expanded">
+        <div class="comparison-modal-header">
+          <h3>Comparar Productos (${compareProducts.length})</h3>
+          <button class="comparison-modal-close" onclick="window.catalogManager.closeComparisonPanel()">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+        <div class="comparison-modal-body">
+          <div class="comparison-products-grid">
+            ${productsList}
+          </div>
+        </div>
+        <div class="comparison-modal-footer">
+          <button class="comparison-clear-btn" onclick="window.catalogManager.clearAllCompare()">
+            Limpiar comparación
+          </button>
+        </div>
+      </div>
+    `;
+
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+  }
+
+  closeComparisonPanel() {
+    const modal = document.getElementById('comparison-modal');
+    if (modal) {
+      modal.classList.remove('active');
+      document.body.style.overflow = '';
+    }
+  }
+
+  removeFromCompare(productId) {
+    this.toggleCompare(productId);
+    // Re-render the panel if it's open
+    const modal = document.getElementById('comparison-modal');
+    if (modal && modal.classList.contains('active')) {
+      if (this.compareList.length > 0) {
+        this.showComparisonPanel();
+      } else {
+        this.closeComparisonPanel();
+      }
+    }
+  }
+
+  clearAllCompare() {
+    this.compareList = [];
+    this.saveCompareList();
+    this.updateCompareButtons();
+    this.updateFabVisibility();
+    this.closeComparisonPanel();
+  }
+}
+
+// Global functions - exposed to window for inline onclick handlers
+window.clearAllFilters = function() {
+  // Reset all filters
+  document.querySelectorAll('.filter-select').forEach(select => {
+    (select as HTMLSelectElement).value = '';
+  });
+  (document.getElementById('filter-price-min') as HTMLInputElement).value = '';
+  (document.getElementById('filter-price-max') as HTMLInputElement).value = '';
+  
+  // Clear the main search input
+  const mainSearchInput = document.getElementById('advanced-search-input') as HTMLInputElement;
+  if (mainSearchInput) {
+    mainSearchInput.value = '';
+    // Trigger search clear
+    if ((window as any).advancedSearch) {
+      (window as any).advancedSearch.clearSearch();
+    }
+  }
+  
+  // Trigger filter update
+  catalogManager.currentFilters = {};
+  catalogManager.applyFiltersAndSort();
+}
+
+window.openComparison = function() {
+  // Open comparison modal/panel
+  if (window.catalogManager) {
+    if (window.catalogManager.compareList && window.catalogManager.compareList.length > 0) {
+      window.catalogManager.showComparisonPanel();
+    } else {
+      alert('No hay productos para comparar');
+    }
+  } else {
+    console.error('CatalogManager not initialized');
+  }
+};
+
+window.openFavorites = function() {
+  // Open favorites modal/panel
+  if (window.catalogManager) {
+    if (window.catalogManager.favorites && window.catalogManager.favorites.length > 0) {
+      window.catalogManager.showFavoritesPanel();
+    } else {
+      alert('No hay productos en favoritos');
+    }
+  } else {
+    console.error('CatalogManager not initialized');
+  }
+};
+
+// Search Tab Management
+function initSearchTabs() {
+  const tabs = document.querySelectorAll('.search-tab');
+  const panels = document.querySelectorAll('.search-panel');
+  
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      const targetTab = tab.dataset.tab;
+      
+      // Update active tab
+      tabs.forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      
+      // Update active panel
+      panels.forEach(panel => {
+        panel.classList.remove('active');
+        if (panel.id === `${targetTab}-panel`) {
+          panel.classList.add('active');
+        }
+      });
+      
+      // Clear other search when switching tabs
+      if (targetTab === 'size') {
+        // Clear advanced search
+        if (window.advancedSearch) {
+          window.advancedSearch.clearSearch();
+        }
+      } else {
+        // Clear tire search
+        if (window.tireSearchBySize) {
+          window.tireSearchBySize.reset();
+        }
+      }
+    });
+  });
+}
+
+// Update WhatsApp links with selected tire size filters
+function updateWhatsAppLinksWithFilters() {
+  const catalogManager = (window as any).catalogManager;
+  if (!catalogManager) return;
+
+  // Get active tire size filters (from tire search or sidebar)
+  const width = catalogManager.currentFilters.tireWidth || catalogManager.currentFilters.sidebarWidth || '';
+  const profile = catalogManager.currentFilters.tireProfile || catalogManager.currentFilters.sidebarProfile || '';
+  const rim = catalogManager.currentFilters.tireRim || catalogManager.currentFilters.sidebarRim || '';
+
+  // Build tire size string if any filter is selected
+  let tireSizeInfo = '';
+  if (width || profile || rim) {
+    const parts: string[] = [];
+    if (width) parts.push(`Ancho: ${width}`);
+    if (profile) parts.push(`Perfil: ${profile}`);
+    if (rim) parts.push(`Rin: ${rim}`);
+    tireSizeInfo = ` - Medida seleccionada: ${parts.join(', ')}`;
+  }
+
+  // Update all WhatsApp popup links
+  document.querySelectorAll('.whatsapp-popup').forEach(popup => {
+    const links = popup.querySelectorAll('.whatsapp-option') as NodeListOf<HTMLAnchorElement>;
+    links.forEach(link => {
+      const href = link.getAttribute('href');
+      if (!href) return;
+
+      // Extract base URL and original message
+      const url = new URL(href);
+      let originalMessage = url.searchParams.get('text') || '';
+      
+      // Store original message if not already stored
+      if (!link.dataset.originalMessage) {
+        link.dataset.originalMessage = originalMessage;
+      }
+
+      // Build new message with tire size info
+      let newMessage = link.dataset.originalMessage || '';
+      if (tireSizeInfo && !newMessage.includes('Medida seleccionada:')) {
+        newMessage = newMessage + tireSizeInfo;
+      } else if (tireSizeInfo) {
+        // Replace existing tire size info
+        newMessage = newMessage.replace(/ - Medida seleccionada:.*$/, tireSizeInfo);
+      } else {
+        // Remove tire size info if no filters
+        newMessage = newMessage.replace(/ - Medida seleccionada:.*$/, '');
+      }
+
+      url.searchParams.set('text', newMessage);
+      link.setAttribute('href', url.toString());
+    });
+  });
+}
+
+// Listen for filter changes to update WhatsApp links
+document.addEventListener('catalogFiltered', updateWhatsAppLinksWithFilters);
+document.addEventListener('tireSearchBySize', updateWhatsAppLinksWithFilters);
+document.addEventListener('sidebarFilters', updateWhatsAppLinksWithFilters);
+
+// Initialize when DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+  window.catalogManager = new CatalogManager();
+  initSearchTabs();
+});
+</script>
+
+<style>
+  .catalog-page {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  }
+
+  .catalog-hero {
+    background: linear-gradient(135deg, var(--primary-color) 0%, #1e40af 100%);
+    color: white;
+    padding: 3rem 1rem 2rem;
+    text-align: center;
+  }
+
+  .hero-content {
+    max-width: var(--max-width);
+    margin: 0 auto;
+  }
+
+  .catalog-hero h1 {
+    font-size: clamp(2.5rem, 5vw, 3.5rem);
+    margin-bottom: 1rem;
+    font-weight: 700;
+  }
+
+  .hero-description {
+    font-size: 1.125rem;
+    opacity: 0.9;
+    margin-bottom: 2rem;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .hero-search {
+    max-width: 700px;
+    margin: 0 auto;
+  }
+
+  .search-tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    justify-content: center;
+  }
+
+  .search-tab {
+    padding: 0.75rem 1.5rem;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 0.5rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+  }
+
+  .search-tab:hover {
+    background: rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.5);
+    transform: translateY(-2px);
+  }
+
+  .search-tab.active {
+    background: white;
+    color: var(--primary-color);
+    border-color: white;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  }
+
+  .search-content {
+    position: relative;
+  }
+
+  .search-panel {
+    display: none;
+    animation: fadeIn 0.3s ease;
+  }
+
+  .search-panel.active {
+    display: block;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .catalog-main {
+    padding: 2rem 0;
+  }
+
+  .catalog-container {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    padding: 0 1rem;
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 2rem;
+    align-items: start;
+  }
+
+  .filters-sidebar {
+    position: sticky;
+    top: 2rem;
+  }
+
+  .products-section {
+    min-height: 600px;
+  }
+
+  .catalog-grid {
+    display: grid;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .catalog-grid.view-grid {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  }
+
+  .catalog-grid.view-list {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .empty-state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+    text-align: center;
+  }
+
+  .empty-content {
+    max-width: 400px;
+  }
+
+  .empty-content svg {
+    color: #9ca3af;
+    margin-bottom: 1rem;
+  }
+
+  .empty-content h3 {
+    font-size: 1.5rem;
+    color: #374151;
+    margin-bottom: 0.5rem;
+  }
+
+  .empty-content p {
+    color: #6b7280;
+    margin-bottom: 1.5rem;
+  }
+
+  .clear-filters-btn {
+    padding: 0.75rem 1.5rem;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+  }
+
+  .clear-filters-btn:hover {
+    background: #1e40af;
+  }
+
+  .loading-state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+  }
+
+  .loading-content {
+    text-align: center;
+  }
+
+  .loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #e5e7eb;
+    border-top: 4px solid var(--primary-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 1rem;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  .quick-view-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+  }
+
+  .modal-backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  .modal-content {
+    position: relative;
+    background: white;
+    border-radius: 1rem;
+    max-width: 800px;
+    max-height: 80vh;
+    overflow-y: auto;
+    margin: 1rem;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  }
+
+  .modal-close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: none;
+    border: none;
+    color: #6b7280;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 0.375rem;
+    transition: background-color 0.2s ease;
+    z-index: 10;
+  }
+
+  .modal-close:hover {
+    background: #f3f4f6;
+  }
+
+  .modal-body {
+    padding: 2rem;
+  }
+
+  .floating-actions {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    z-index: 100;
+  }
+
+  .fab {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem 1.5rem;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 2rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    transition: all 0.3s ease;
+    text-decoration: none;
+  }
+
+  .fab:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.2);
+  }
+
+  .fab-label {
+    font-size: 0.875rem;
+  }
+
+  @media (max-width: 1024px) {
+    .catalog-container {
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+
+    .filters-sidebar {
+      position: static;
+    }
+
+    .floating-actions {
+      bottom: 1rem;
+      right: 1rem;
+    }
+
+    .fab {
+      padding: 0.75rem 1rem;
+    }
+
+    .fab-label {
+      display: none;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .catalog-container {
+      grid-template-columns: 1fr;
+      gap: 0;
+    }
+
+    .filters-sidebar {
+      display: none;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .catalog-hero {
+      padding: 2rem 1rem 1.5rem;
+    }
+
+    .catalog-main {
+      padding: 1rem 0;
+    }
+
+    .catalog-container {
+      padding: 0 0.5rem;
+    }
+
+    .catalog-grid.view-grid {
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 1rem;
+    }
+
+    .modal-content {
+      margin: 0.5rem;
+      max-height: 90vh;
+    }
+
+    .modal-body {
+      padding: 1.5rem;
+    }
+  }
+
+  /* Favorites Modal Styles - Global for dynamic elements */
+  :global(.favorites-modal),
+  :global(.comparison-modal) {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+  }
+
+  :global(.favorites-modal.active),
+  :global(.comparison-modal.active) {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  :global(.favorites-modal-overlay),
+  :global(.comparison-modal-overlay) {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+  }
+
+  :global(.favorites-modal-content),
+  :global(.comparison-modal-content) {
+    position: relative;
+    background: white;
+    border-radius: 1rem;
+    max-width: 500px;
+    width: 90%;
+    max-height: 80vh;
+    overflow: hidden;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    display: flex;
+    flex-direction: column;
+  }
+
+  :global(.comparison-modal-content) {
+    max-width: 900px;
+  }
+
+  :global(.comparison-modal-content.comparison-modal-expanded) {
+    max-width: 95vw;
+    width: 1400px;
+    max-height: 90vh;
+  }
+
+  :global(.favorites-modal-header),
+  :global(.comparison-modal-header) {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  :global(.favorites-modal-header h3),
+  :global(.comparison-modal-header h3) {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1f2937;
+  }
+
+  :global(.favorites-modal-close),
+  :global(.comparison-modal-close) {
+    background: none;
+    border: none;
+    color: #6b7280;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+    transition: all 0.2s ease;
+  }
+
+  :global(.favorites-modal-close:hover),
+  :global(.comparison-modal-close:hover) {
+    background: #f3f4f6;
+    color: #1f2937;
+  }
+
+  :global(.favorites-modal-body),
+  :global(.comparison-modal-body) {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem 1.5rem;
+  }
+
+  :global(.favorite-item) {
+    display: flex;
+    align-items: stretch;
+    gap: 1rem;
+    padding: 1rem;
+    background: #f9fafb;
+    border-radius: 0.75rem;
+    margin-bottom: 0.75rem;
+    transition: all 0.2s ease;
+  }
+
+  :global(.favorite-item:hover) {
+    background: #f3f4f6;
+  }
+
+  :global(.favorite-item:last-child) {
+    margin-bottom: 0;
+  }
+
+  :global(.favorite-item-image) {
+    flex-shrink: 0;
+    width: 80px;
+    height: 80px;
+    border-radius: 0.5rem;
+    overflow: hidden;
+    background: white;
+    border: 1px solid #e5e7eb;
+  }
+
+  :global(.favorite-item-image img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  :global(.favorite-item-no-image) {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f3f4f6;
+    color: #9ca3af;
+  }
+
+  :global(.favorite-item-content) {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-width: 0;
+  }
+
+  :global(.favorite-item-info) {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  :global(.favorite-item-info strong) {
+    color: #1f2937;
+    font-size: 0.95rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  :global(.favorite-item-info span) {
+    color: #6b7280;
+    font-size: 0.85rem;
+  }
+
+  :global(.favorite-item-actions) {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-top: 0.5rem;
+  }
+
+  :global(.favorite-whatsapp-btn) {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.4rem 0.75rem;
+    background: #25d366;
+    color: white;
+    border-radius: 0.5rem;
+    text-decoration: none;
+    font-size: 0.8rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+  }
+
+  :global(.favorite-whatsapp-btn:hover) {
+    background: #128c7e;
+    transform: translateY(-1px);
+  }
+
+  :global(.favorite-whatsapp-btn svg) {
+    flex-shrink: 0;
+  }
+
+  :global(.favorite-view-btn) {
+    padding: 0.4rem 0.75rem;
+    background: var(--primary-color);
+    color: white;
+    border-radius: 0.5rem;
+    text-decoration: none;
+    font-size: 0.8rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+  }
+
+  :global(.favorite-view-btn:hover) {
+    background: #1e40af;
+  }
+
+  :global(.favorite-remove-btn) {
+    padding: 0.4rem;
+    background: none;
+    border: none;
+    color: #9ca3af;
+    cursor: pointer;
+    border-radius: 0.5rem;
+    transition: all 0.2s ease;
+    margin-left: auto;
+  }
+
+  :global(.favorite-remove-btn:hover) {
+    background: #fee2e2;
+    color: #ef4444;
+  }
+
+  :global(.favorites-modal-footer),
+  :global(.comparison-modal-footer) {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: center;
+  }
+
+  :global(.favorites-clear-btn),
+  :global(.comparison-clear-btn) {
+    padding: 0.75rem 1.5rem;
+    background: #fee2e2;
+    color: #dc2626;
+    border: none;
+    border-radius: 0.5rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  :global(.favorites-clear-btn:hover),
+  :global(.comparison-clear-btn:hover) {
+    background: #fecaca;
+  }
+
+  /* Comparison Grid */
+  :global(.comparison-grid) {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+  }
+
+  :global(.compare-item) {
+    position: relative;
+    padding: 1.25rem;
+    background: #f9fafb;
+    border-radius: 0.75rem;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  :global(.compare-remove-btn) {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    padding: 0.375rem;
+    background: white;
+    border: none;
+    color: #9ca3af;
+    cursor: pointer;
+    border-radius: 0.375rem;
+    transition: all 0.2s ease;
+  }
+
+  :global(.compare-remove-btn:hover) {
+    background: #fee2e2;
+    color: #ef4444;
+  }
+
+  :global(.compare-item-name) {
+    font-size: 0.95rem;
+    color: #1f2937;
+    margin-top: 0.5rem;
+  }
+
+  :global(.compare-item-brand) {
+    font-size: 0.85rem;
+    color: var(--primary-color);
+    font-weight: 500;
+  }
+
+  :global(.compare-item-model),
+  :global(.compare-item-rims) {
+    font-size: 0.8rem;
+    color: #6b7280;
+  }
+
+  :global(.compare-view-btn) {
+    margin-top: auto;
+    padding: 0.5rem 1rem;
+    background: var(--primary-color);
+    color: white;
+    border-radius: 0.5rem;
+    text-decoration: none;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+  }
+
+  :global(.compare-view-btn:hover) {
+    background: #1e40af;
+  }
+
+  @media (max-width: 640px) {
+    :global(.favorites-modal-content),
+    :global(.comparison-modal-content) {
+      width: 95%;
+      max-height: 90vh;
+    }
+
+    :global(.comparison-grid) {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  /* Enhanced Comparison Modal Styles */
+  :global(.comparison-products-grid) {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1.5rem;
+    padding: 0.5rem;
+  }
+
+  :global(.compare-product-card) {
+    position: relative;
+    background: #f9fafb;
+    border-radius: 1rem;
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    border: 1px solid #e5e7eb;
+    transition: all 0.2s ease;
+  }
+
+  :global(.compare-product-card:hover) {
+    border-color: var(--primary-color);
+    box-shadow: 0 4px 12px rgba(13, 75, 160, 0.1);
+  }
+
+  :global(.compare-product-header) {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+
+  :global(.compare-product-image) {
+    flex-shrink: 0;
+    width: 80px;
+    height: 80px;
+    border-radius: 0.75rem;
+    overflow: hidden;
+    background: white;
+    border: 1px solid #e5e7eb;
+  }
+
+  :global(.compare-product-image img) {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    padding: 0.25rem;
+  }
+
+  :global(.compare-no-image) {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f3f4f6;
+    color: #9ca3af;
+  }
+
+  :global(.compare-product-title) {
+    flex: 1;
+    min-width: 0;
+  }
+
+  :global(.compare-product-title h4) {
+    margin: 0 0 0.5rem 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1f2937;
+    line-height: 1.3;
+  }
+
+  :global(.compare-brand-badge) {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    background: var(--primary-color);
+    color: white;
+    border-radius: 0.375rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+  }
+
+  :global(.compare-specs) {
+    background: white;
+    border-radius: 0.75rem;
+    padding: 0.75rem;
+    border: 1px solid #e5e7eb;
+  }
+
+  :global(.compare-spec-row) {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.375rem 0;
+    border-bottom: 1px solid #f3f4f6;
+  }
+
+  :global(.compare-spec-row:last-child) {
+    border-bottom: none;
+  }
+
+  :global(.compare-spec-label) {
+    font-size: 0.8rem;
+    color: #6b7280;
+    font-weight: 500;
+  }
+
+  :global(.compare-spec-value) {
+    font-size: 0.8rem;
+    color: #1f2937;
+    font-weight: 600;
+    text-align: right;
+    max-width: 60%;
+    word-break: break-word;
+  }
+
+  :global(.compare-variants-section) {
+    background: white;
+    border-radius: 0.75rem;
+    padding: 0.75rem;
+    border: 1px solid #e5e7eb;
+  }
+
+  :global(.compare-variants-section h5) {
+    margin: 0 0 0.75rem 0;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #1f2937;
+  }
+
+  :global(.compare-variants-table-wrapper) {
+    overflow-x: auto;
+    border-radius: 0.5rem;
+    border: 1px solid #e5e7eb;
+    max-height: 200px;
+    overflow-y: auto;
+  }
+
+  :global(.compare-variants-table) {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.75rem;
+  }
+
+  :global(.compare-variants-table th) {
+    background: #f8fafc;
+    padding: 0.5rem 0.375rem;
+    text-align: left;
+    font-weight: 600;
+    color: #374151;
+    border-bottom: 1px solid #e5e7eb;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
+
+  :global(.compare-variants-table td) {
+    padding: 0.5rem 0.375rem;
+    border-bottom: 1px solid #f3f4f6;
+    color: #1f2937;
+  }
+
+  :global(.compare-variants-table tbody tr:hover) {
+    background: #f8fafc;
+  }
+
+  :global(.stock-available) {
+    color: #059669;
+    font-weight: 600;
+  }
+
+  :global(.stock-out) {
+    color: #dc2626;
+    font-weight: 600;
+  }
+
+  :global(.compare-whatsapp-btn) {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.5rem;
+    background: #25d366;
+    color: white !important;
+    border-radius: 0.375rem;
+    text-decoration: none;
+    font-size: 0.7rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+  }
+
+  :global(.compare-whatsapp-btn:hover) {
+    background: #128c7e;
+    transform: translateY(-1px);
+  }
+
+  :global(.compare-whatsapp-btn svg) {
+    flex-shrink: 0;
+  }
+
+  :global(.no-variants) {
+    color: #9ca3af;
+    font-size: 0.8rem;
+    text-align: center;
+    padding: 1rem;
+    margin: 0;
+  }
+
+  :global(.compare-actions) {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: auto;
+  }
+
+  :global(.compare-consult-btn) {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    background: #25d366;
+    color: white !important;
+    border-radius: 0.5rem;
+    text-decoration: none;
+    font-size: 0.875rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+  }
+
+  :global(.compare-consult-btn:hover) {
+    background: #128c7e;
+    transform: translateY(-1px);
+  }
+
+  :global(.compare-details-btn) {
+    display: block;
+    padding: 0.625rem 1rem;
+    background: white;
+    color: var(--primary-color) !important;
+    border: 2px solid var(--primary-color);
+    border-radius: 0.5rem;
+    text-decoration: none;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-align: center;
+    transition: all 0.2s ease;
+  }
+
+  :global(.compare-details-btn:hover) {
+    background: var(--primary-color);
+    color: white !important;
+  }
+
+  @media (max-width: 768px) {
+    :global(.comparison-modal-content.comparison-modal-expanded) {
+      max-width: 98vw;
+      width: 100%;
+      margin: 0.5rem;
+    }
+
+    :global(.comparison-products-grid) {
+      grid-template-columns: 1fr;
+    }
+
+    :global(.compare-product-header) {
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+
+    :global(.compare-product-title) {
+      text-align: center;
+    }
+  }
+</style>

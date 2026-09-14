@@ -1,0 +1,48 @@
+---
+interface Props {
+  name: string;
+  size?: number;
+  class?: string;
+  color?: string;
+}
+
+const { name, size = 34, class: className = '', color } = Astro.props;
+
+const iconPath = `/icons/${name}.svg`;
+const response = await fetch(new URL(iconPath, Astro.url));
+const svgContent = await response.text();
+
+// Extraer viewBox y contenido interno del SVG
+function parseSVG(svgString) {
+  const viewBoxMatch = svgString.match(/viewBox=["']([^"']+)["']/);
+  const viewBox = viewBoxMatch ? viewBoxMatch[1] : '0 0 24 24';
+  const innerContentMatch = svgString.match(/<svg[^>]*>([\s\S]*?)<\/svg>/);
+  const innerContent = innerContentMatch ? innerContentMatch[1] : '';
+  return { viewBox, innerContent };
+}
+
+const { viewBox, innerContent } = parseSVG(svgContent);
+---
+
+<svg
+  viewBox={viewBox}
+  width={size}
+  height={size}
+  class={`icon ${className}`}
+  style={`width: ${size}px; height: ${size}px;${color ? ` color: ${color}; fill: ${color};` : ''}`}
+  fill={color ? color : "currentColor"}
+  color={color ? color : "currentColor"}
+  set:html={innerContent}
+/>
+
+<style>
+  .icon {
+    display: inline-block;
+    vertical-align: middle;
+  }
+
+  .icon :global(svg) {
+    width: 100%;
+    height: 100%;
+  }
+</style>

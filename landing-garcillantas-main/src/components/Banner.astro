@@ -1,0 +1,42 @@
+---
+---
+<div class="banner-bg">
+<section class="banner">
+        <img src="/images/banner.webp" alt="Banner" class="banner-image" />
+</section>
+</div>
+<style>
+    .banner-bg {
+        width: 100%;
+        background: var(--primary-color);
+        height: auto;
+        padding: 2rem 0;
+    }
+    .banner {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 80%;
+        margin: 0 auto;
+        padding: 2rem;
+        height: auto;
+    }
+    .banner-image {
+        width: 100%;
+        height: auto;
+        object-fit: cover;
+        border-radius: 2rem;
+        max-width: 100%;
+        display: block;
+    }
+    @media (max-width: 600px) {
+        .banner {
+            width: 100%;
+            padding: 1rem;
+            height: auto;
+        }
+        .banner-image {
+            border-radius: 1rem;
+        }
+    }
+</style>

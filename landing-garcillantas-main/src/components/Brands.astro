@@ -1,0 +1,114 @@
+---
+
+export interface Props {
+  showTitle?: boolean;
+}
+
+const { showTitle = true } = Astro.props;
+
+const brands = [
+  { name: 'Sailun', logo: '/images/brands/sailun.webp' },
+  { name: 'Rockblade', logo: '/images/brands/rockblade.webp' },
+  { name: 'Goodyear', logo: '/images/brands/goodyear.webp' },
+  { name: 'Nexen', logo: '/images/brands/nexen.webp' },
+  { name: 'Fronway', logo: '/images/brands/fronway.webp' },
+  { name: 'Triangle', logo: '/images/brands/triangle.webp' }
+];
+---
+
+<section class="brands-section">
+  <div class="brands-container">
+    {showTitle && <h2>Nuestras Marcas</h2>}
+    <div class="brands-slider">
+      <div class="slider-track">
+        {[...brands, ...brands].map(brand => (
+          <div class="brand-item">
+            <img src={brand.logo} alt={`${brand.name} logo`} loading="lazy" />
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .brands-section {
+    width: 100vw;
+    max-width: var(--max-width);
+    margin: auto;
+    padding: 5rem 0;
+    overflow: hidden;
+  }
+
+  .brands-container {
+    max-width: var(--max-width);
+    margin: 0 auto;
+  }
+
+  h2 {
+    text-align: center;
+    color: var(--secondary-color);
+    font-size: 2.5rem;
+    margin-bottom: 3rem;
+  }
+
+  .brands-slider {
+    position: relative;
+    padding: 2rem 0;
+  }
+
+  .slider-track {
+    display: flex;
+    animation: scroll 30s linear infinite;
+    width: fit-content;
+  }
+
+  .brand-item {
+    flex: 0 0 250px;
+    padding: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .brand-item img {
+    max-width: 180px;
+    height: auto;
+    filter: grayscale(100%) brightness(500%);
+    transition: filter 0.3s ease;
+  }
+
+  .brand-item:hover img {
+    filter: grayscale(0%) brightness(100%);
+  }
+
+  @keyframes scroll {
+    0% {
+      transform: translateX(0);
+    }
+    100% {
+      transform: translateX(-50%);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .slider-track {
+      animation: none;
+    }
+  }
+
+  @media (max-width: 768px) {
+    h2 {
+      font-size: 2rem;
+    }
+
+    .brand-item {
+      flex: 0 0 200px;
+      padding: 1rem;
+    }
+
+    .brand-item img {
+      max-width: 150px;
+    }
+  }
+</style>

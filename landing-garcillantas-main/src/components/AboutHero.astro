@@ -1,0 +1,82 @@
+<div class="about-hero">
+  <div class="parallax-bg"></div>
+  <div class="content">
+    <h1>Nosotros</h1>
+  </div>
+</div>
+
+<style>
+  .about-hero {
+    position: relative;
+    height: 100vh;
+    width: 100%;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .parallax-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 120%;
+    background-image: url('/images/bg-about.webp');
+    background-size: cover;
+    background-position: center;
+    transform: translateY(0);
+    will-change: transform;
+    animation: parallaxScroll 20s ease-in-out infinite alternate;
+  }
+
+  .content {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    color: white;
+    padding: 2rem;
+  }
+
+  h1 {
+    font-size: 4rem;
+    margin: 0;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  }
+
+  @keyframes parallaxScroll {
+    from {
+      transform: translateY(0);
+    }
+    to {
+      transform: translateY(-10%);
+    }
+  }
+
+  @media (max-width: 768px) {
+    h1 {
+      font-size: 3rem;
+    }
+  }
+</style>
+
+<script>
+  function initParallax() {
+    const parallaxBg = document.querySelector('.parallax-bg');
+    
+    function handleScroll() {
+      if (parallaxBg) {
+        const scrolled = window.pageYOffset;
+        const rate = scrolled * 0.5;
+        parallaxBg.style.transform = `translateY(${rate}px)`;
+      }
+    }
+
+    window.addEventListener('scroll', handleScroll);
+    // Ejecutar una vez al inicio para establecer la posición inicial
+    handleScroll();
+  }
+
+  // Ejecutar cuando el DOM está listo y después de cada navegación
+  document.addEventListener('astro:page-load', initParallax);
+</script>

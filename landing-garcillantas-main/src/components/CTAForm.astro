@@ -1,0 +1,273 @@
+---
+
+---
+
+<section class="cta-section" id="registrate">
+  <div class="cta-container">
+    <div class="cta-content">
+      <div class="form-side">
+        <div class="cta-title">
+          <h1>¡Regístrate y gana un descuento del 50% en servicios preventivos, en el lanzamiento de nuestro nuevo sitio web!</h1>
+        </div>
+        <div class="from-message" id="form-message">
+          <p></p>
+        </div>
+        <form method="POST" class="cta-form" id="discount-form">
+          <div class="form-group">
+            <input 
+              type="text" 
+              id="fullName" 
+              name="fullName" 
+              placeholder="Nombre completo"
+              required
+            >
+          </div>
+
+          <div class="form-group">
+            <input 
+              type="email" 
+              id="email" 
+              name="email" 
+              placeholder="Correo electrónico"
+              required
+            >
+          </div>
+
+          <div class="form-group">
+            <input 
+              type="tel" 
+              id="phone" 
+              name="phone" 
+              placeholder="Celular"
+              pattern="[0-9]{10}"
+              required
+            >
+          </div>
+
+          <div class="form-group">
+            <input 
+              type="checkbox" 
+              id="dataPolicy" 
+              name="dataPolicy" 
+              required
+            >
+            <label for="dataPolicy">Acepto la política de tratamiento de datos</label>
+          </div>
+
+          <button type="submit">Obtener descuento</button>
+        </form>
+      </div>
+      
+      <div class="image-side">
+        <img src="/images/discount-image.webp" alt="20% de descuento en servicios" />
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .cta-section {
+    padding: var(--spacing-lg) var(--spacing-md);
+    background: #ffffff68;
+    padding: 5rem 0;
+    border-radius: 8px;
+    border: 1px solid var(--primary-color);
+  }
+
+  .cta-container {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    box-sizing: border-box;
+  }
+
+  .cta-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3rem;
+    align-items: center;
+  }
+
+  .form-side {
+    text-align: left;
+  }
+
+  .from-message {
+    display: none; /* Initially hidden */
+    color: var(--secondary-color);
+    background-color: var(--primary-color);
+    font-size: 1.5rem;
+    margin-top: 1rem;
+    text-align: center;
+    padding: 1em;
+    border-radius: 12px;
+  }
+
+  .image-side {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .image-side img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 12px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease;
+  }
+
+  .image-side img:hover {
+    transform: scale(1.02);
+  }
+
+  h1 {
+    color: var(--primary-color);
+    font-size: 2.5rem;
+    margin-bottom: 2rem;
+    line-height: 1.2;
+  }
+
+  .cta-form {
+    max-width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    padding: 1em;
+  }
+
+  .form-group {
+    box-sizing: border-box;
+    width: 100%;
+    display: flex;
+    align-items: center;
+  }
+
+  .form-group input[type="text"], .form-group input[type="email"], .form-group input[type="tel"] {
+    width: 100%;
+    padding: 1rem;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-color);
+    font-size: 1rem;
+    box-sizing: border-box;
+    transition: border-color 0.3s ease;
+  }
+
+  .form-group input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+  }
+
+  .form-group input::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+  }
+
+  .form-group input[type="checkbox"] {
+    margin-right: 0.5rem;
+  }
+
+  .form-group label {
+    color: var(--text-color);
+    font-size: 0.9rem;
+  }
+
+  button {
+    background: var(--primary-color);
+    color: #ffffff;
+    border: none;
+    padding: 1rem 2rem;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    box-sizing: border-box;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+    width: 100%;
+    cursor: pointer;
+  }
+
+  button:hover {
+    transform: translateY(-2px);
+  }
+
+  @media (max-width: 768px) {
+    h2 {
+      font-size: 1.5rem;
+    }
+
+    .cta-section {
+      padding: var(--spacing-md) var(--spacing-sm);
+    }
+  }
+
+  @media (max-width: 968px) {
+    .cta-content {
+      grid-template-columns: 1fr;
+      gap: 2rem;
+    }
+
+    .form-side {
+      text-align: center;
+    }
+
+    .image-side {
+      order: -1;
+    }
+
+    .image-side img {
+      max-width: 80%;
+    }
+
+    h1 {
+      font-size: 2rem;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .image-side img {
+      max-width: 100%;
+    }
+
+    h1 {
+      font-size: 1.8rem;
+    }
+
+    .cta-section {
+      margin: 2rem 0;
+    }
+  }
+</style>
+
+<script>
+const formElement = document.getElementById('discount-form');
+const formMessage = document.getElementById('form-message');
+
+if (formElement) {
+    formElement.addEventListener('submit', async function (event) {
+        event.preventDefault(); // Evitar que el formulario se envíe de forma tradicional
+
+        const formData = new FormData(event.target as HTMLFormElement);
+
+        try {
+            const response = await fetch('/api/register', {
+                method: 'POST',
+                body: formData,
+            });
+
+            if (!response.ok) {
+                throw new Error('Error en la solicitud');
+            }
+
+            const result = await response.json();
+            formMessage.querySelector("p").textContent = result.message; // Display success message
+            formMessage.style.display = 'block';
+            (formElement as HTMLFormElement).reset();
+        } catch (error) {
+            console.error('Error:', error);
+            formMessage.querySelector("p").textContent = 'Hubo un error al procesar tu registro. Por favor, intenta nuevamente.';
+            formMessage.style.display = 'block';
+        }
+    });
+}
+</script>

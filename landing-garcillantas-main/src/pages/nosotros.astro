@@ -1,0 +1,18 @@
+---
+import AdvisorBanner from "../components/AdvisorBanner.astro";
+import Brands from "../components/Brands.astro";
+import Services from "../components/Services.astro";
+import ServiceStations from "../components/ServiceStations.astro";
+import Layout from "../layouts/Layout.astro";
+import AboutUs from "../components/AboutUs.astro";
+import BgImage from "@/components/BgImage.astro";
+---
+
+<Layout>
+	<BgImage imageUrl="/images/bg-about.webp" />
+	<AboutUs />
+	<Services />
+	<ServiceStations/>
+	<Brands />
+	<AdvisorBanner />
+</Layout>

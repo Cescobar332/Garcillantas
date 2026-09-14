@@ -1,0 +1,160 @@
+---
+import type { BlogPost } from '../lib/contentful';
+
+interface Props {
+  post: BlogPost;
+}
+
+const { post } = Astro.props;
+---
+
+<article class="featured-post">
+  <div class="featured-post-container">
+    <div class="featured-post-image">
+      <img src={post.fields.featuredImage.fields.file.url} alt={post.fields.title} loading="lazy" />
+    </div>
+    <div class="featured-post-content">
+      <div class="featured-post-meta">
+        <span class="featured-label">Último Artículo</span>
+        <div class="author-info">
+          {post.fields.author.fields.avatar && (
+            <img 
+              src={post.fields.author.fields.avatar.fields.file.url} 
+              alt={post.fields.author.fields.name}
+              class="author-avatar"
+            />
+          )}
+          <span class="author-name">{post.fields.author.fields.name}</span>
+        </div>
+        <time datetime={post.fields.publishedDate}>
+          {new Date(post.fields.publishedDate).toLocaleDateString('es-ES', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+          })}
+        </time>
+      </div>
+      <h2>{post.fields.title}</h2>
+      <p>{post.fields.subtitle}</p>
+      <a href={`/blog/${post.fields.slug}`} class="featured-read-more">
+        Leer más
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M5 12h14M12 5l7 7-7 7"/>
+        </svg>
+      </a>
+    </div>
+  </div>
+</article>
+
+<style>
+  .featured-post {
+    margin: 4em 0;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    border-radius: 12px;
+    overflow: hidden;
+    color: white;
+  }
+
+  .featured-post-container {
+    display: grid;
+    grid-template-columns: 1.2fr 0.8fr;
+    gap: var(--spacing-lg);
+    align-items: center;
+    padding: var(--spacing-lg);
+  }
+
+  .featured-post-image {
+    aspect-ratio: 16/9;
+    overflow: hidden;
+    border-radius: 8px;
+  }
+
+  .featured-post-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+  }
+
+  .featured-post:hover .featured-post-image img {
+    transform: scale(1.05);
+  }
+
+  .featured-post-content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+
+  .featured-post-meta {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    font-size: 0.9rem;
+  }
+
+  .author-info {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+  }
+
+  .author-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+  }
+
+  .author-name {
+    font-weight: 500;
+  }
+
+  .featured-label {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-weight: 600;
+  }
+
+  .featured-post h2 {
+    font-size: 2rem;
+    line-height: 1.2;
+    margin: var(--spacing-sm) 0;
+  }
+
+  .featured-post p {
+    font-size: 1.1rem;
+    opacity: 0.9;
+    margin-bottom: var(--spacing-md);
+  }
+
+  .featured-read-more {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: white;
+    text-decoration: none;
+    font-weight: 600;
+    transition: transform 0.3s ease;
+  }
+
+  .featured-read-more:hover {
+    transform: translateX(5px);
+  }
+
+  @media (max-width: 768px) {
+    .featured-post-container {
+      grid-template-columns: 1fr;
+    }
+
+    .featured-post h2 {
+      font-size: 1.5rem;
+    }
+
+    .featured-post p {
+      font-size: 1rem;
+    }
+  }
+</style>

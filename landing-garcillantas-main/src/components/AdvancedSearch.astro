@@ -1,0 +1,559 @@
+---
+interface Props {
+  products: any[];
+}
+
+const { products } = Astro.props;
+
+// Extract search terms for autocomplete
+const searchTerms = new Set<string>();
+products.forEach((product: any) => {
+  const brand = Array.isArray(product.fields.brand) ? product.fields.brand : [product.fields.brand];
+  brand.forEach((b: string) => {
+    if (b) searchTerms.add(b);
+  });
+  
+  if (product.fields.productName) searchTerms.add(product.fields.productName);
+  if (product.fields.model) searchTerms.add(product.fields.model);
+  
+  const variants = product.fields.variants || [];
+  variants.forEach((variant: any) => {
+    // Add rim sizes
+    if (variant.fields.rimSize) {
+      searchTerms.add(`${variant.fields.rimSize}"`);
+      searchTerms.add(`R${variant.fields.rimSize}`);
+      searchTerms.add(`Rin ${variant.fields.rimSize}`);
+    }
+    
+    // Add widths
+    if (variant.fields.width) {
+      searchTerms.add(`${variant.fields.width}`);
+    }
+    
+    // Add aspect ratios
+    if (variant.fields.aspectRatio) {
+      searchTerms.add(`${variant.fields.aspectRatio}`);
+    }
+    
+    // Add complete tire dimensions (width/aspectRatio/rimSize)
+    if (variant.fields.width && variant.fields.aspectRatio && variant.fields.rimSize) {
+      const dimension = `${variant.fields.width}/${variant.fields.aspectRatio}R${variant.fields.rimSize}`;
+      searchTerms.add(dimension);
+      searchTerms.add(`${variant.fields.width}/${variant.fields.aspectRatio}/${variant.fields.rimSize}`);
+    }
+    
+    // Add tire types
+    if (variant.fields.tireType) {
+      const types = Array.isArray(variant.fields.tireType) ? variant.fields.tireType : [variant.fields.tireType];
+      types.forEach((type: string) => {
+        if (type) searchTerms.add(type);
+      });
+    }
+  });
+});
+
+const searchTermsArray = Array.from(searchTerms).filter(term => term && term.trim()).sort();
+---
+
+<div class="advanced-search">
+  <div class="search-container">
+    <div class="search-input-wrapper">
+      <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"/>
+        <path d="m21 21-4.35-4.35"/>
+      </svg>
+      <input 
+        type="text" 
+        id="advanced-search-input"
+        placeholder="Buscar por marca, modelo, medida..."
+        autocomplete="off"
+        spellcheck="false"
+      />
+      <button class="clear-search" id="clear-search" style="display: none;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    
+    <div class="search-suggestions" id="search-suggestions">
+      <div class="suggestions-header">Sugerencias</div>
+      <div class="suggestions-list" id="suggestions-list"></div>
+    </div>
+  </div>
+
+  <div class="search-history" id="search-history" style="display: none;">
+    <h4>Búsquedas recientes</h4>
+    <div class="history-items" id="history-items"></div>
+  </div>
+</div>
+
+<script define:vars={{ searchTermsArray }}>
+class AdvancedSearch {
+  constructor() {
+    this.searchInput = document.getElementById('advanced-search-input');
+    this.clearBtn = document.getElementById('clear-search');
+    this.suggestionsContainer = document.getElementById('search-suggestions');
+    this.suggestionsList = document.getElementById('suggestions-list');
+    this.searchHistory = document.getElementById('search-history');
+    this.historyItems = document.getElementById('history-items');
+    
+    this.searchTerms = searchTermsArray;
+    this.currentSuggestions = [];
+    this.selectedIndex = -1;
+    this.searchHistoryData = this.loadSearchHistory();
+    
+    this.init();
+  }
+
+  init() {
+    this.searchInput.addEventListener('input', this.handleInput.bind(this));
+    this.searchInput.addEventListener('focus', this.handleFocus.bind(this));
+    this.searchInput.addEventListener('blur', this.handleBlur.bind(this));
+    this.searchInput.addEventListener('keydown', this.handleKeydown.bind(this));
+    this.clearBtn.addEventListener('click', this.clearSearch.bind(this));
+    
+    document.addEventListener('click', this.handleDocumentClick.bind(this));
+    
+    this.renderSearchHistory();
+  }
+
+  handleInput(e) {
+    const query = e.target.value.trim();
+    
+    if (query.length === 0) {
+      this.clearBtn.style.display = 'none';
+      this.hideSuggestions();
+      this.showSearchHistory();
+      // Trigger local search clear
+      this.performLocalSearch('');
+      return;
+    }
+
+    this.clearBtn.style.display = 'block';
+    this.hideSearchHistory();
+    this.showSuggestions(query);
+    
+    // Trigger local search with debounce (no redirect)
+    clearTimeout(this.searchTimeout);
+    this.searchTimeout = setTimeout(() => {
+      this.performLocalSearch(query);
+    }, 300);
+  }
+
+  handleFocus() {
+    if (this.searchInput.value.trim().length === 0) {
+      this.showSearchHistory();
+    } else {
+      this.showSuggestions(this.searchInput.value.trim());
+    }
+  }
+
+  handleBlur(e) {
+    // Delay hiding to allow clicking on suggestions
+    setTimeout(() => {
+      if (!this.suggestionsContainer.contains(document.activeElement)) {
+        this.hideSuggestions();
+        this.hideSearchHistory();
+      }
+    }, 150);
+  }
+
+  handleKeydown(e) {
+    if (!this.suggestionsContainer.style.display || this.suggestionsContainer.style.display === 'none') {
+      return;
+    }
+
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault();
+        this.selectedIndex = Math.min(this.selectedIndex + 1, this.currentSuggestions.length - 1);
+        this.updateSelection();
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        this.selectedIndex = Math.max(this.selectedIndex - 1, -1);
+        this.updateSelection();
+        break;
+      case 'Enter':
+        e.preventDefault();
+        if (this.selectedIndex >= 0) {
+          this.selectSuggestion(this.currentSuggestions[this.selectedIndex]);
+        } else {
+          this.performSearch(this.searchInput.value.trim());
+        }
+        break;
+      case 'Escape':
+        this.hideSuggestions();
+        this.searchInput.blur();
+        break;
+    }
+  }
+
+  handleDocumentClick(e) {
+    if (!this.searchInput.contains(e.target) && !this.suggestionsContainer.contains(e.target)) {
+      this.hideSuggestions();
+      this.hideSearchHistory();
+    }
+  }
+
+  showSuggestions(query) {
+    const suggestions = this.getSuggestions(query);
+    this.currentSuggestions = suggestions;
+    this.selectedIndex = -1;
+    
+    if (suggestions.length === 0) {
+      this.hideSuggestions();
+      return;
+    }
+
+    this.suggestionsList.innerHTML = suggestions.map((suggestion, index) => 
+      `<div class="suggestion-item" data-index="${index}" onclick="advancedSearch.selectSuggestion('${suggestion}')">
+        ${this.highlightMatch(suggestion, query)}
+      </div>`
+    ).join('');
+
+    this.suggestionsContainer.style.display = 'block';
+  }
+
+  getSuggestions(query) {
+    const lowerQuery = query.toLowerCase().trim();
+    if (!lowerQuery) return [];
+    
+    const suggestions = [];
+    
+    // Exact matches first (highest priority)
+    const exactMatches = this.searchTerms.filter(term => 
+      term.toLowerCase() === lowerQuery
+    );
+    
+    // Starts with matches (high priority)
+    const startsWithMatches = this.searchTerms.filter(term => 
+      term.toLowerCase().startsWith(lowerQuery) && 
+      term.toLowerCase() !== lowerQuery
+    );
+    
+    // Contains matches (medium priority)
+    const containsMatches = this.searchTerms.filter(term => 
+      term.toLowerCase().includes(lowerQuery) && 
+      !term.toLowerCase().startsWith(lowerQuery)
+    );
+    
+    // Fuzzy matches for tire dimensions (e.g., "225 60 16" matches "225/60R16")
+    const fuzzyMatches = [];
+    if (/^\d+[\s\/]*\d*[\s\/]*\d*$/.test(lowerQuery)) {
+      const normalizedQuery = lowerQuery.replace(/[\s\/]+/g, '/');
+      fuzzyMatches.push(...this.searchTerms.filter(term => {
+        const normalizedTerm = term.toLowerCase().replace(/[r\s]/g, '/');
+        return normalizedTerm.includes(normalizedQuery) && 
+               !containsMatches.includes(term) && 
+               !startsWithMatches.includes(term);
+      }));
+    }
+    
+    // Combine all matches with priority order
+    suggestions.push(...exactMatches.slice(0, 2));
+    suggestions.push(...startsWithMatches.slice(0, 4));
+    suggestions.push(...containsMatches.slice(0, 3));
+    suggestions.push(...fuzzyMatches.slice(0, 2));
+    
+    // Remove duplicates and limit to 8 suggestions
+    return [...new Set(suggestions)].slice(0, 8);
+  }
+
+  highlightMatch(text, query) {
+    const index = text.toLowerCase().indexOf(query.toLowerCase());
+    if (index === -1) return text;
+    
+    return text.substring(0, index) + 
+           `<strong>${text.substring(index, index + query.length)}</strong>` + 
+           text.substring(index + query.length);
+  }
+
+  updateSelection() {
+    const items = this.suggestionsList.querySelectorAll('.suggestion-item');
+    items.forEach((item, index) => {
+      item.classList.toggle('selected', index === this.selectedIndex);
+    });
+  }
+
+  selectSuggestion(suggestion) {
+    this.searchInput.value = suggestion;
+    this.hideSuggestions();
+    this.performSearch(suggestion);
+    this.addToSearchHistory(suggestion);
+  }
+
+  hideSuggestions() {
+    this.suggestionsContainer.style.display = 'none';
+    this.selectedIndex = -1;
+  }
+
+  showSearchHistory() {
+    if (this.searchHistoryData.length > 0) {
+      this.searchHistory.style.display = 'block';
+    }
+  }
+
+  hideSearchHistory() {
+    this.searchHistory.style.display = 'none';
+  }
+
+  renderSearchHistory() {
+    if (this.searchHistoryData.length === 0) return;
+    
+    this.historyItems.innerHTML = this.searchHistoryData.map(term => 
+      `<div class="history-item" onclick="advancedSearch.selectSuggestion('${term}')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <polyline points="12,6 12,12 16,14"/>
+        </svg>
+        ${term}
+      </div>`
+    ).join('');
+  }
+
+  addToSearchHistory(term) {
+    if (!term || this.searchHistoryData.includes(term)) return;
+    
+    this.searchHistoryData.unshift(term);
+    this.searchHistoryData = this.searchHistoryData.slice(0, 5); // Keep only 5 recent searches
+    
+    this.saveSearchHistory();
+    this.renderSearchHistory();
+  }
+
+  loadSearchHistory() {
+    try {
+      return JSON.parse(localStorage.getItem('garcillantas_search_history') || '[]');
+    } catch {
+      return [];
+    }
+  }
+
+  saveSearchHistory() {
+    try {
+      localStorage.setItem('garcillantas_search_history', JSON.stringify(this.searchHistoryData));
+    } catch {
+      // Handle localStorage errors silently
+    }
+  }
+
+  clearSearch() {
+    this.searchInput.value = '';
+    this.clearBtn.style.display = 'none';
+    this.hideSuggestions();
+    this.showSearchHistory();
+    
+    // Trigger local search clear (no redirect)
+    this.performLocalSearch('');
+  }
+
+  performLocalSearch(query) {
+    // Dispatch event for local filtering (for catalog page)
+    const searchEvent = new CustomEvent('catalogSearch', {
+      detail: { query: query.trim() }
+    });
+    document.dispatchEvent(searchEvent);
+  }
+
+  performSearch(query) {
+    const trimmedQuery = query.trim();
+    
+    if (trimmedQuery) {
+      // Add to search history
+      this.addToSearchHistory(trimmedQuery);
+      
+      // Redirect to search results page
+      const searchUrl = new URL('/catalogo/busqueda', window.location.origin);
+      searchUrl.searchParams.set('q', trimmedQuery);
+      window.location.href = searchUrl.toString();
+    } else {
+      // If empty query, dispatch event for local filtering (for catalog page)
+      this.performLocalSearch('');
+    }
+  }
+}
+
+// Initialize when DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+  window.advancedSearch = new AdvancedSearch();
+});
+</script>
+
+<style>
+  .advanced-search {
+    position: relative;
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  .search-container {
+    position: relative;
+  }
+
+  .search-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .search-icon {
+    position: absolute;
+    left: 1rem;
+    color: #9ca3af;
+    z-index: 2;
+  }
+
+  #advanced-search-input {
+    width: 100%;
+    padding: 1rem 1rem 1rem 3rem;
+    padding-right: 3rem;
+    border: 2px solid #e5e7eb;
+    border-radius: 0.75rem;
+    font-size: 1rem;
+    background: white;
+    transition: all 0.2s ease;
+    outline: none;
+  }
+
+  #advanced-search-input:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(13, 75, 160, 0.1);
+  }
+
+  .clear-search {
+    position: absolute;
+    right: 1rem;
+    background: none;
+    border: none;
+    color: #9ca3af;
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: 0.25rem;
+    transition: color 0.2s ease;
+  }
+
+  .clear-search:hover {
+    color: #6b7280;
+  }
+
+  .search-suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.75rem;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    z-index: 100;
+    display: none;
+    margin-top: 0.5rem;
+    overflow: hidden;
+  }
+
+  .suggestions-header {
+    padding: 0.75rem 1rem;
+    background: #f9fafb;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #6b7280;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  .suggestions-list {
+    max-height: 300px;
+    overflow-y: auto;
+  }
+
+  .suggestion-item {
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    border-bottom: 1px solid #f3f4f6;
+    transition: background-color 0.15s ease;
+    font-size: 0.875rem;
+    color: #374151;
+  }
+
+  .suggestion-item:hover,
+  .suggestion-item.selected {
+    background: #f3f4f6;
+  }
+
+  .suggestion-item:last-child {
+    border-bottom: none;
+  }
+
+  .suggestion-item strong {
+    color: var(--primary-color);
+    font-weight: 600;
+  }
+
+  .search-history {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.75rem;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    z-index: 100;
+    margin-top: 0.5rem;
+    overflow: hidden;
+  }
+
+  .search-history h4 {
+    margin: 0;
+    padding: 0.75rem 1rem;
+    background: #f9fafb;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #6b7280;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  .history-items {
+    max-height: 200px;
+    overflow-y: auto;
+  }
+
+  .history-item {
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    border-bottom: 1px solid #f3f4f6;
+    transition: background-color 0.15s ease;
+    font-size: 0.875rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #374151;
+  }
+
+  .history-item:hover {
+    background: #f3f4f6;
+  }
+
+  .history-item:last-child {
+    border-bottom: none;
+  }
+
+  .history-item svg {
+    flex-shrink: 0;
+    opacity: 0.5;
+  }
+
+  @media (max-width: 768px) {
+    .search-suggestions,
+    .search-history {
+      position: fixed;
+      top: auto;
+      left: 1rem;
+      right: 1rem;
+      margin-top: 0.25rem;
+    }
+  }
+</style>

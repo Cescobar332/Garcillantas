@@ -1,0 +1,1374 @@
+---
+/**
+ * QuickViewProduct - Modal de vista rápida del producto
+ * Muestra información detallada del producto sin salir del catálogo
+ */
+---
+
+<div class="quick-view-modal" id="quick-view-modal" role="dialog" aria-modal="true" aria-labelledby="quick-view-title">
+  <div class="quick-view-overlay" id="quick-view-overlay"></div>
+  
+  <div class="quick-view-container">
+    <button class="quick-view-close" id="quick-view-close" aria-label="Cerrar vista rápida">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="18" y1="6" x2="6" y2="18"/>
+        <line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+    </button>
+
+    <div class="quick-view-content" id="quick-view-content">
+      <!-- Loading State -->
+      <div class="quick-view-loading" id="quick-view-loading">
+        <div class="loading-spinner">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10" stroke-opacity="0.25"/>
+            <path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round">
+              <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="1s" repeatCount="indefinite"/>
+            </path>
+          </svg>
+        </div>
+        <p>Cargando producto...</p>
+      </div>
+
+      <!-- Product Content (populated via JS) -->
+      <div class="quick-view-product" id="quick-view-product" style="display: none;">
+        <!-- Image Gallery -->
+        <div class="qv-gallery">
+          <div class="qv-main-image">
+            <img id="qv-image" src="" alt="" loading="lazy" />
+            <span class="qv-badge-featured" id="qv-badge-featured" style="display: none;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+              </svg>
+              Destacado
+            </span>
+          </div>
+        </div>
+
+        <!-- Product Details -->
+        <div class="qv-details">
+          <div class="qv-header">
+            <span class="qv-category" id="qv-category"></span>
+            <h2 class="qv-title" id="quick-view-title"></h2>
+            <div class="qv-meta">
+              <span class="qv-brand" id="qv-brand"></span>
+              <span class="qv-separator">·</span>
+              <span class="qv-model" id="qv-model"></span>
+            </div>
+          </div>
+
+          <!-- Price Section -->
+          <div class="qv-pricing" id="qv-pricing">
+            <div class="qv-price-label">Precio</div>
+            <div class="qv-price-value" id="qv-price"></div>
+          </div>
+
+          <!-- Stock Status -->
+          <div class="qv-stock" id="qv-stock">
+            <div class="qv-stock-indicator"></div>
+            <span class="qv-stock-text"></span>
+          </div>
+
+          <!-- Specifications -->
+          <div class="qv-specs">
+            <h3 class="qv-specs-title">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                <path d="M2 17l10 5 10-5"/>
+                <path d="M2 12l10 5 10-5"/>
+              </svg>
+              Especificaciones
+            </h3>
+            <div class="qv-specs-grid" id="qv-specs-grid">
+              <!-- Specs populated via JS -->
+            </div>
+          </div>
+
+          <!-- Dimensions Table Section -->
+          <div class="qv-dimensions" id="qv-dimensions-section">
+            <h3 class="qv-dimensions-title">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="7" height="7"/>
+                <rect x="14" y="3" width="7" height="7"/>
+                <rect x="14" y="14" width="7" height="7"/>
+                <rect x="3" y="14" width="7" height="7"/>
+              </svg>
+              Dimensiones Disponibles
+            </h3>
+            <div class="qv-dimensions-table-wrapper" id="qv-dimensions-wrapper">
+              <table class="qv-dimensions-table" id="qv-dimensions-table">
+                <thead>
+                  <tr>
+                    <th>Medida</th>
+                    <th>Índice</th>
+                    <th>Tipo</th>
+                    <th>Precio</th>
+                    <th>Stock</th>
+                  </tr>
+                </thead>
+                <tbody id="qv-dimensions-tbody">
+                  <!-- Rows populated via JS -->
+                </tbody>
+              </table>
+            </div>
+            <div class="qv-dimensions-summary" id="qv-dimensions-summary"></div>
+          </div>
+
+          <!-- Actions -->
+          <div class="qv-actions">
+            <a href="#" class="qv-btn-primary" id="qv-whatsapp-btn" target="_blank" rel="noopener">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+              </svg>
+              Consultar por WhatsApp
+            </a>
+            
+            <a href="#" class="qv-btn-secondary" id="qv-details-btn">
+              Ver todos los detalles
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M5 12h14"/>
+                <path d="M12 5l7 7-7 7"/>
+              </svg>
+            </a>
+          </div>
+
+          <!-- Quick Actions -->
+          <div class="qv-quick-actions">
+            <button class="qv-action-btn" id="qv-favorite-btn" title="Agregar a favoritos">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+              </svg>
+              <span>Favorito</span>
+            </button>
+            
+            <button class="qv-action-btn" id="qv-compare-btn" title="Agregar a comparación">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 11H5a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2z"/>
+                <path d="M21 11h-4a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2z"/>
+                <path d="M7 21V8a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v13"/>
+              </svg>
+              <span>Comparar</span>
+            </button>
+            
+            <button class="qv-action-btn" id="qv-share-btn" title="Compartir producto">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="18" cy="5" r="3"/>
+                <circle cx="6" cy="12" r="3"/>
+                <circle cx="18" cy="19" r="3"/>
+                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+              </svg>
+              <span>Compartir</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Error State -->
+      <div class="quick-view-error" id="quick-view-error" style="display: none;">
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="8" x2="12" y2="12"/>
+          <line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        <h3>Error al cargar el producto</h3>
+        <p>No pudimos cargar la información del producto. Por favor, intenta de nuevo.</p>
+        <button class="qv-retry-btn" id="qv-retry-btn">Reintentar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+class QuickViewManager {
+  constructor() {
+    this.modal = document.getElementById('quick-view-modal');
+    this.overlay = document.getElementById('quick-view-overlay');
+    this.closeBtn = document.getElementById('quick-view-close');
+    this.content = document.getElementById('quick-view-content');
+    this.loading = document.getElementById('quick-view-loading');
+    this.productContainer = document.getElementById('quick-view-product');
+    this.errorContainer = document.getElementById('quick-view-error');
+    this.retryBtn = document.getElementById('qv-retry-btn');
+    
+    this.currentSlug = null;
+    this.currentProductData = null;
+    this.productsCache = new Map();
+    
+    this.init();
+  }
+
+  init() {
+    this.setupEventListeners();
+    this.loadProductsData();
+  }
+
+  setupEventListeners() {
+    // Close modal events
+    this.overlay?.addEventListener('click', () => this.close());
+    this.closeBtn?.addEventListener('click', () => this.close());
+    
+    // Escape key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && this.isOpen()) {
+        this.close();
+      }
+    });
+
+    // Retry button
+    this.retryBtn?.addEventListener('click', () => {
+      if (this.currentSlug) {
+        this.loadProduct(this.currentSlug);
+      }
+    });
+
+    // Quick view button clicks (delegated)
+    document.addEventListener('click', (e) => {
+      const quickViewBtn = e.target.closest('.quick-view-btn');
+      if (quickViewBtn) {
+        e.preventDefault();
+        const slug = quickViewBtn.dataset.productSlug;
+        if (slug) {
+          this.open(slug);
+        }
+      }
+    });
+
+    // Quick actions in modal
+    document.getElementById('qv-favorite-btn')?.addEventListener('click', () => this.toggleFavorite());
+    document.getElementById('qv-compare-btn')?.addEventListener('click', () => this.toggleCompare());
+    document.getElementById('qv-share-btn')?.addEventListener('click', () => this.shareProduct());
+  }
+
+  loadProductsData() {
+    // Pre-load product data from DOM
+    const productCards = document.querySelectorAll('.product-card');
+    productCards.forEach(card => {
+      const slug = card.dataset.slug;
+      if (slug) {
+        const variants = card.dataset.variants ? JSON.parse(card.dataset.variants) : [];
+        this.productsCache.set(slug, {
+          id: card.dataset.productId,
+          slug: slug,
+          name: card.querySelector('.product-title a')?.textContent?.trim() || card.dataset.name,
+          brand: card.querySelector('.brand')?.textContent?.trim() || card.dataset.brand,
+          model: card.querySelector('.model')?.textContent?.trim() || card.dataset.model,
+          category: card.querySelector('.category')?.textContent?.trim() || card.dataset.category,
+          image: card.querySelector('.product-img')?.src || '',
+          minPrice: card.dataset.minPrice ? parseFloat(card.dataset.minPrice) : null,
+          maxPrice: card.dataset.maxPrice ? parseFloat(card.dataset.maxPrice) : null,
+          rims: card.dataset.rims ? card.dataset.rims.split(',').filter(Boolean) : [],
+          widths: card.dataset.widths ? card.dataset.widths.split(',').filter(Boolean) : [],
+          profiles: card.dataset.profiles ? card.dataset.profiles.split(',').filter(Boolean) : [],
+          types: card.dataset.types ? card.dataset.types.split(',').filter(Boolean) : [],
+          seasons: card.dataset.seasons ? card.dataset.seasons.split(',').filter(Boolean) : [],
+          stock: parseInt(card.dataset.stock) || 0,
+          featured: card.dataset.featured === 'true',
+          variants: variants
+        });
+      }
+    });
+  }
+
+  open(slug) {
+    this.currentSlug = slug;
+    this.modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+    
+    this.showLoading();
+    this.loadProduct(slug);
+  }
+
+  close() {
+    this.modal.classList.remove('active');
+    document.body.style.overflow = '';
+    this.currentSlug = null;
+    this.currentProductData = null;
+  }
+
+  isOpen() {
+    return this.modal.classList.contains('active');
+  }
+
+  showLoading() {
+    this.loading.style.display = 'flex';
+    this.productContainer.style.display = 'none';
+    this.errorContainer.style.display = 'none';
+  }
+
+  showProduct() {
+    this.loading.style.display = 'none';
+    this.productContainer.style.display = 'grid';
+    this.errorContainer.style.display = 'none';
+  }
+
+  showError() {
+    this.loading.style.display = 'none';
+    this.productContainer.style.display = 'none';
+    this.errorContainer.style.display = 'flex';
+  }
+
+  loadProduct(slug) {
+    // Try to get from cache first
+    const cachedProduct = this.productsCache.get(slug);
+    
+    if (cachedProduct) {
+      // Simulate small delay for better UX
+      setTimeout(() => {
+        this.currentProductData = cachedProduct;
+        this.renderProduct(cachedProduct);
+        this.showProduct();
+      }, 200);
+    } else {
+      // If not in cache, show error (in a real app, you'd fetch from API)
+      setTimeout(() => {
+        this.showError();
+      }, 500);
+    }
+  }
+
+  renderProduct(product) {
+    // Image
+    const imageEl = document.getElementById('qv-image');
+    if (imageEl) {
+      imageEl.src = product.image || '';
+      imageEl.alt = product.name || '';
+    }
+
+    // Featured badge
+    const featuredBadge = document.getElementById('qv-badge-featured');
+    if (featuredBadge) {
+      featuredBadge.style.display = product.featured ? 'flex' : 'none';
+    }
+
+    // Header info
+    document.getElementById('qv-category').textContent = this.formatCategory(product.category);
+    document.getElementById('quick-view-title').textContent = product.name;
+    document.getElementById('qv-brand').textContent = product.brand;
+    document.getElementById('qv-model').textContent = product.model;
+
+    // Price
+    this.renderPrice(product);
+
+    // Stock
+    this.renderStock(product);
+
+    // Specifications
+    this.renderSpecs(product);
+
+    // Dimensions Table
+    this.renderDimensionsTable(product);
+
+    // Update action buttons
+    this.updateActionButtons(product);
+  }
+
+  formatCategory(category) {
+    if (!category) return '';
+    return category.charAt(0).toUpperCase() + category.slice(1);
+  }
+
+  renderPrice(product) {
+    const priceEl = document.getElementById('qv-price');
+    const pricingSection = document.getElementById('qv-pricing');
+    
+    if (product.minPrice !== null) {
+      pricingSection.style.display = 'block';
+      if (product.maxPrice && product.maxPrice !== product.minPrice) {
+        priceEl.innerHTML = `
+          <span class="qv-price-from">Desde</span>
+          <span class="qv-price-amount">$${product.minPrice.toLocaleString('es-CO')}</span>
+          <span class="qv-price-to">hasta $${product.maxPrice.toLocaleString('es-CO')}</span>
+        `;
+      } else {
+        priceEl.innerHTML = `<span class="qv-price-amount">$${product.minPrice.toLocaleString('es-CO')}</span>`;
+      }
+    } else {
+      pricingSection.style.display = 'none';
+    }
+  }
+
+  renderStock(product) {
+    const stockEl = document.getElementById('qv-stock');
+    const indicator = stockEl.querySelector('.qv-stock-indicator');
+    const text = stockEl.querySelector('.qv-stock-text');
+    
+    if (product.stock > 5) {
+      indicator.className = 'qv-stock-indicator in-stock';
+      text.textContent = 'En stock';
+      text.className = 'qv-stock-text in-stock';
+    } else if (product.stock > 0) {
+      indicator.className = 'qv-stock-indicator low-stock';
+      text.textContent = `Últimas ${product.stock} unidades`;
+      text.className = 'qv-stock-text low-stock';
+    } else {
+      indicator.className = 'qv-stock-indicator out-of-stock';
+      text.textContent = 'Sin stock';
+      text.className = 'qv-stock-text out-of-stock';
+    }
+  }
+
+  renderSpecs(product) {
+    const specsGrid = document.getElementById('qv-specs-grid');
+    let specsHTML = '';
+
+    if (product.rims?.length > 0) {
+      specsHTML += `
+        <div class="qv-spec-item">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <circle cx="12" cy="12" r="6"/>
+            <circle cx="12" cy="12" r="2"/>
+          </svg>
+          <span class="qv-spec-label">Rines</span>
+          <span class="qv-spec-value">${product.rims.sort((a, b) => a - b).join('", ')}"</span>
+        </div>
+      `;
+    }
+
+    if (product.widths?.length > 0) {
+      specsHTML += `
+        <div class="qv-spec-item">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+          </svg>
+          <span class="qv-spec-label">Anchos</span>
+          <span class="qv-spec-value">${product.widths.sort((a, b) => a - b).join(', ')}</span>
+        </div>
+      `;
+    }
+
+    if (product.profiles?.length > 0) {
+      specsHTML += `
+        <div class="qv-spec-item">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 4h16v16H4z"/>
+            <path d="M4 12h16"/>
+          </svg>
+          <span class="qv-spec-label">Perfiles</span>
+          <span class="qv-spec-value">${product.profiles.sort((a, b) => a - b).join(', ')}</span>
+        </div>
+      `;
+    }
+
+    if (product.types?.length > 0) {
+      specsHTML += `
+        <div class="qv-spec-item">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+            <path d="M2 17l10 5 10-5"/>
+            <path d="M2 12l10 5 10-5"/>
+          </svg>
+          <span class="qv-spec-label">Tipo</span>
+          <span class="qv-spec-value">${product.types.map(t => this.formatCategory(t)).join(', ')}</span>
+        </div>
+      `;
+    }
+
+    if (product.seasons?.length > 0) {
+      specsHTML += `
+        <div class="qv-spec-item">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="5"/>
+            <line x1="12" y1="1" x2="12" y2="3"/>
+            <line x1="12" y1="21" x2="12" y2="23"/>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+            <line x1="1" y1="12" x2="3" y2="12"/>
+            <line x1="21" y1="12" x2="23" y2="12"/>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+          </svg>
+          <span class="qv-spec-label">Uso</span>
+          <span class="qv-spec-value">${product.seasons.map(s => this.formatCategory(s)).join(', ')}</span>
+        </div>
+      `;
+    }
+
+    specsGrid.innerHTML = specsHTML;
+  }
+
+  renderDimensionsTable(product) {
+    const dimensionsSection = document.getElementById('qv-dimensions-section');
+    const dimensionsTbody = document.getElementById('qv-dimensions-tbody');
+    const dimensionsSummary = document.getElementById('qv-dimensions-summary');
+    
+    if (!product.variants || product.variants.length === 0) {
+      dimensionsSection.style.display = 'none';
+      return;
+    }
+
+    dimensionsSection.style.display = 'block';
+    
+    // Generate table rows
+    const rowsHTML = product.variants.map(v => {
+      const sizeLabel = `${v.width}/${v.aspectRatio}R${v.rimSize}`;
+      const loadSpeedIndex = v.loadspeedIndex || '—';
+      const tireType = v.tireType ? (Array.isArray(v.tireType) ? v.tireType.join(', ') : v.tireType) : '—';
+      const price = v.price && v.price > 0 ? `$${v.price.toLocaleString('es-CO')}` : '<span class="qv-consult-price">Consultar</span>';
+      const stockClass = v.stock > 0 ? (v.stock <= 5 ? 'low-stock' : 'in-stock') : 'out-of-stock';
+      const stockText = v.stock > 0 ? v.stock : 'Agotado';
+      
+      return `
+        <tr class="${v.stock === 0 ? 'row-unavailable' : ''}">
+          <td class="td-size"><strong>${sizeLabel}</strong></td>
+          <td class="td-index">${loadSpeedIndex}</td>
+          <td class="td-type">${this.formatCategory(tireType)}</td>
+          <td class="td-price">${price}</td>
+          <td class="td-stock"><span class="stock-badge ${stockClass}">${stockText}</span></td>
+        </tr>
+      `;
+    }).join('');
+
+    dimensionsTbody.innerHTML = rowsHTML;
+
+    // Summary
+    const totalVariants = product.variants.length;
+    const availableVariants = product.variants.filter(v => v.stock > 0).length;
+    dimensionsSummary.innerHTML = `
+      <span class="summary-text">
+        <strong>${availableVariants}</strong> de <strong>${totalVariants}</strong> medidas disponibles
+      </span>
+    `;
+  }
+
+  updateActionButtons(product) {
+    // WhatsApp button
+    const whatsappBtn = document.getElementById('qv-whatsapp-btn');
+    const message = encodeURIComponent(`Hola, estoy interesado en ${product.name} - ${product.brand} ${product.model}`);
+    whatsappBtn.href = `https://wa.me/573001234567?text=${message}`;
+
+    // Details button
+    const detailsBtn = document.getElementById('qv-details-btn');
+    detailsBtn.href = `/catalogo/${product.slug}`;
+
+    // Update favorite/compare button states
+    this.updateQuickActionStates(product);
+  }
+
+  updateQuickActionStates(product) {
+    const favoriteBtn = document.getElementById('qv-favorite-btn');
+    const compareBtn = document.getElementById('qv-compare-btn');
+    
+    // Check localStorage for favorites
+    try {
+      const favorites = JSON.parse(localStorage.getItem('garcillantas_favorites') || '[]');
+      favoriteBtn.classList.toggle('active', favorites.includes(product.id));
+    } catch {}
+
+    // Check localStorage for compare list
+    try {
+      const compareList = JSON.parse(localStorage.getItem('garcillantas_compare') || '[]');
+      compareBtn.classList.toggle('active', compareList.includes(product.id));
+    } catch {}
+  }
+
+  toggleFavorite() {
+    if (!this.currentProductData) return;
+    
+    try {
+      let favorites = JSON.parse(localStorage.getItem('garcillantas_favorites') || '[]');
+      const index = favorites.indexOf(this.currentProductData.id);
+      
+      if (index > -1) {
+        favorites.splice(index, 1);
+      } else {
+        favorites.push(this.currentProductData.id);
+      }
+      
+      localStorage.setItem('garcillantas_favorites', JSON.stringify(favorites));
+      this.updateQuickActionStates(this.currentProductData);
+      
+      // Dispatch event for other components
+      document.dispatchEvent(new CustomEvent('favoritesUpdated', { detail: { favorites } }));
+    } catch {}
+  }
+
+  toggleCompare() {
+    if (!this.currentProductData) return;
+    
+    try {
+      let compareList = JSON.parse(localStorage.getItem('garcillantas_compare') || '[]');
+      const index = compareList.indexOf(this.currentProductData.id);
+      
+      if (index > -1) {
+        compareList.splice(index, 1);
+      } else if (compareList.length < 4) {
+        compareList.push(this.currentProductData.id);
+      } else {
+        alert('Máximo 4 productos para comparar');
+        return;
+      }
+      
+      localStorage.setItem('garcillantas_compare', JSON.stringify(compareList));
+      this.updateQuickActionStates(this.currentProductData);
+      
+      // Dispatch event for other components
+      document.dispatchEvent(new CustomEvent('compareListUpdated', { detail: { compareList } }));
+    } catch {}
+  }
+
+  shareProduct() {
+    if (!this.currentProductData) return;
+    
+    const url = `${window.location.origin}/catalogo/${this.currentProductData.slug}`;
+    const title = `${this.currentProductData.name} - ${this.currentProductData.brand}`;
+    
+    if (navigator.share) {
+      navigator.share({
+        title: title,
+        text: `Mira este producto: ${title}`,
+        url: url
+      }).catch(() => {});
+    } else {
+      // Fallback: copy to clipboard
+      navigator.clipboard.writeText(url).then(() => {
+        const shareBtn = document.getElementById('qv-share-btn');
+        const originalText = shareBtn.querySelector('span').textContent;
+        shareBtn.querySelector('span').textContent = '¡Copiado!';
+        setTimeout(() => {
+          shareBtn.querySelector('span').textContent = originalText;
+        }, 2000);
+      }).catch(() => {});
+    }
+  }
+}
+
+// Initialize when DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+  window.quickViewManager = new QuickViewManager();
+});
+</script>
+
+<style>
+  /* Modal Base */
+  .quick-view-modal {
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-modal, 500);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+  }
+
+  .quick-view-modal.active {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .quick-view-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+  }
+
+  .quick-view-container {
+    position: relative;
+    width: 100%;
+    max-width: 900px;
+    max-height: 90vh;
+    background: white;
+    border-radius: 1.5rem;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    overflow: hidden;
+    transform: scale(0.95) translateY(20px);
+    transition: transform 0.3s ease;
+  }
+
+  .quick-view-modal.active .quick-view-container {
+    transform: scale(1) translateY(0);
+  }
+
+  .quick-view-close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255, 255, 255, 0.9);
+    color: #374151;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  .quick-view-close:hover {
+    background: #ef4444;
+    color: white;
+    transform: rotate(90deg);
+  }
+
+  .quick-view-content {
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  /* Loading State */
+  .quick-view-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem 2rem;
+    gap: 1rem;
+    color: #6b7280;
+  }
+
+  .loading-spinner svg {
+    color: var(--primary-color, #0d4ba0);
+  }
+
+  /* Error State */
+  .quick-view-error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem 2rem;
+    gap: 1rem;
+    text-align: center;
+    color: #6b7280;
+  }
+
+  .quick-view-error svg {
+    color: #ef4444;
+  }
+
+  .quick-view-error h3 {
+    margin: 0;
+    color: #1f2937;
+    font-size: 1.25rem;
+  }
+
+  .quick-view-error p {
+    margin: 0;
+    max-width: 300px;
+  }
+
+  .qv-retry-btn {
+    padding: 0.75rem 1.5rem;
+    background: var(--primary-color, #0d4ba0);
+    color: white;
+    border: none;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .qv-retry-btn:hover {
+    background: var(--primary-dark, #1e40af);
+  }
+
+  /* Product Layout */
+  .quick-view-product {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+  }
+
+  /* Gallery */
+  .qv-gallery {
+    background: #f8fafc;
+    padding: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .qv-main-image {
+    position: relative;
+    width: 100%;
+    max-width: 400px;
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .qv-main-image img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    border-radius: 0.5rem;
+  }
+
+  .qv-badge-featured {
+    position: absolute;
+    top: 0.5rem;
+    left: 0.5rem;
+    background: linear-gradient(135deg, #1f2937, #374151);
+    color: white;
+    padding: 0.375rem 0.75rem;
+    border-radius: 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+
+  /* Details */
+  .qv-details {
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    overflow-y: auto;
+    max-height: 90vh;
+  }
+
+  .qv-header {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .qv-category {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--primary-color, #0d4ba0);
+  }
+
+  .qv-title {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1f2937;
+    line-height: 1.3;
+  }
+
+  .qv-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    color: #6b7280;
+  }
+
+  .qv-brand {
+    font-weight: 600;
+    color: #374151;
+  }
+
+  .qv-separator {
+    color: #d1d5db;
+  }
+
+  /* Pricing */
+  .qv-pricing {
+    background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+    padding: 1rem 1.25rem;
+    border-radius: 0.75rem;
+    border: 1px solid #bae6fd;
+  }
+
+  .qv-price-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: #0369a1;
+    margin-bottom: 0.25rem;
+  }
+
+  .qv-price-value {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .qv-price-from {
+    font-size: 0.875rem;
+    color: #6b7280;
+  }
+
+  .qv-price-amount {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--primary-color, #0d4ba0);
+  }
+
+  .qv-price-to {
+    font-size: 0.875rem;
+    color: #6b7280;
+  }
+
+  /* Stock */
+  .qv-stock {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .qv-stock-indicator {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+  }
+
+  .qv-stock-indicator.in-stock {
+    background: #10b981;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+  }
+
+  .qv-stock-indicator.low-stock {
+    background: #f59e0b;
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2);
+  }
+
+  .qv-stock-indicator.out-of-stock {
+    background: #ef4444;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
+  }
+
+  .qv-stock-text {
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+
+  .qv-stock-text.in-stock {
+    color: #059669;
+  }
+
+  .qv-stock-text.low-stock {
+    color: #d97706;
+  }
+
+  .qv-stock-text.out-of-stock {
+    color: #dc2626;
+  }
+
+  /* Specifications */
+  .qv-specs {
+    background: #f8fafc;
+    padding: 1rem;
+    border-radius: 0.75rem;
+    border: 1px solid #e2e8f0;
+  }
+
+  .qv-specs-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0 0 0.75rem 0;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #374151;
+  }
+
+  .qv-specs-title svg {
+    color: var(--primary-color, #0d4ba0);
+  }
+
+  .qv-specs-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .qv-spec-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    background: white;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+  }
+
+  .qv-spec-item svg {
+    color: var(--primary-color, #0d4ba0);
+    flex-shrink: 0;
+  }
+
+  .qv-spec-label {
+    font-weight: 500;
+    color: #6b7280;
+  }
+
+  .qv-spec-value {
+    margin-left: auto;
+    font-weight: 600;
+    color: #1f2937;
+  }
+
+  /* Dimensions Table - Enhanced Styling */
+  .qv-dimensions {
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    padding: 1.25rem;
+    border-radius: 1rem;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  }
+
+  .qv-dimensions-title {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    margin: 0 0 1rem 0;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1f2937;
+  }
+
+  .qv-dimensions-title svg {
+    color: var(--primary-color, #0d4ba0);
+    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+    padding: 0.375rem;
+    border-radius: 0.5rem;
+    width: 28px;
+    height: 28px;
+  }
+
+  .qv-dimensions-table-wrapper {
+    overflow-x: auto;
+    max-height: 280px;
+    overflow-y: auto;
+    border-radius: 0.75rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.06);
+  }
+
+  .qv-dimensions-table-wrapper::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .qv-dimensions-table-wrapper::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 3px;
+  }
+
+  .qv-dimensions-table-wrapper::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 3px;
+  }
+
+  .qv-dimensions-table-wrapper::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+  }
+
+  .qv-dimensions-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 0.8125rem;
+    background: white;
+  }
+
+  .qv-dimensions-table thead {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
+
+  .qv-dimensions-table th {
+    background: linear-gradient(135deg, var(--primary-color, #0d4ba0) 0%, #1e40af 100%);
+    color: white;
+    padding: 0.875rem 0.75rem;
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .qv-dimensions-table th:first-child {
+    border-radius: 0.75rem 0 0 0;
+  }
+
+  .qv-dimensions-table th:last-child {
+    border-radius: 0 0.75rem 0 0;
+  }
+
+  .qv-dimensions-table tbody tr {
+    transition: all 0.2s ease;
+  }
+
+  .qv-dimensions-table tbody tr:nth-child(even) {
+    background: #f8fafc;
+  }
+
+  .qv-dimensions-table td {
+    padding: 0.75rem;
+    border-bottom: 1px solid #f1f5f9;
+    color: #475569;
+    vertical-align: middle;
+  }
+
+  .qv-dimensions-table tr:last-child td {
+    border-bottom: none;
+  }
+
+  .qv-dimensions-table tr:last-child td:first-child {
+    border-radius: 0 0 0 0.75rem;
+  }
+
+  .qv-dimensions-table tr:last-child td:last-child {
+    border-radius: 0 0 0.75rem 0;
+  }
+
+  .qv-dimensions-table tbody tr:hover {
+    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+    transform: scale(1.005);
+  }
+
+  .qv-dimensions-table tr.row-unavailable {
+    opacity: 0.55;
+    background: #f9fafb;
+  }
+
+  .qv-dimensions-table tr.row-unavailable:hover {
+    background: #f3f4f6;
+    transform: none;
+  }
+
+  .qv-dimensions-table .td-size {
+    white-space: nowrap;
+    color: #1e293b;
+    font-weight: 600;
+    font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+    font-size: 0.8rem;
+    letter-spacing: -0.01em;
+  }
+
+  .qv-dimensions-table .td-size strong {
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.375rem;
+    border: 1px solid #bae6fd;
+    display: inline-block;
+  }
+
+  .qv-dimensions-table .td-index {
+    color: #64748b;
+    font-size: 0.75rem;
+  }
+
+  .qv-dimensions-table .td-type {
+    color: #64748b;
+    font-size: 0.75rem;
+    max-width: 100px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .qv-dimensions-table .td-price {
+    font-weight: 700;
+    color: var(--primary-color, #0d4ba0);
+    white-space: nowrap;
+    font-size: 0.875rem;
+  }
+
+  .qv-consult-price {
+    color: #94a3b8;
+    font-weight: 500;
+    font-size: 0.7rem;
+    font-style: italic;
+    background: #f8fafc;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    display: inline-block;
+  }
+
+  .stock-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.3rem 0.625rem;
+    border-radius: 9999px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-align: center;
+    min-width: 50px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  }
+
+  .stock-badge.in-stock {
+    background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+    color: #15803d;
+    border: 1px solid #86efac;
+  }
+
+  .stock-badge.low-stock {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    color: #b45309;
+    border: 1px solid #fcd34d;
+  }
+
+  .stock-badge.out-of-stock {
+    background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+    color: #dc2626;
+    border: 1px solid #fca5a5;
+  }
+
+  .qv-dimensions-summary {
+    margin-top: 1rem;
+    padding: 0.875rem 1rem;
+    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+    border-radius: 0.75rem;
+    text-align: center;
+    border: 1px solid #bfdbfe;
+  }
+
+  .summary-text {
+    font-size: 0.8125rem;
+    color: #475569;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.375rem;
+  }
+
+  .summary-text strong {
+    color: var(--primary-color, #0d4ba0);
+    font-size: 1rem;
+  }
+
+  /* Actions */
+  .qv-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-top: auto;
+  }
+
+  .qv-btn-primary {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.875rem 1.5rem;
+    background: #25d366;
+    color: white;
+    border-radius: 0.75rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s ease;
+  }
+
+  .qv-btn-primary:hover {
+    background: #128c7e;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(37, 211, 102, 0.3);
+  }
+
+  .qv-btn-secondary {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.875rem 1.5rem;
+    background: var(--primary-color, #0d4ba0);
+    color: white;
+    border-radius: 0.75rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s ease;
+  }
+
+  .qv-btn-secondary:hover {
+    background: var(--primary-dark, #1e40af);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(13, 75, 160, 0.3);
+  }
+
+  /* Quick Actions */
+  .qv-quick-actions {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e2e8f0;
+  }
+
+  .qv-action-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.5rem 1rem;
+    background: transparent;
+    border: none;
+    color: #6b7280;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-radius: 0.5rem;
+  }
+
+  .qv-action-btn:hover {
+    background: #f3f4f6;
+    color: var(--primary-color, #0d4ba0);
+  }
+
+  .qv-action-btn.active {
+    color: var(--primary-color, #0d4ba0);
+  }
+
+  .qv-action-btn.active svg {
+    fill: currentColor;
+  }
+
+  .qv-action-btn span {
+    font-size: 0.75rem;
+    font-weight: 500;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .quick-view-modal {
+      padding: 0;
+      align-items: flex-end;
+    }
+
+    .quick-view-container {
+      max-height: 95vh;
+      border-radius: 1.5rem 1.5rem 0 0;
+    }
+
+    .quick-view-product {
+      grid-template-columns: 1fr;
+    }
+
+    .qv-gallery {
+      padding: 1.5rem;
+    }
+
+    .qv-main-image {
+      max-width: 280px;
+    }
+
+    .qv-details {
+      padding: 1.5rem;
+      max-height: none;
+    }
+
+    .qv-title {
+      font-size: 1.25rem;
+    }
+
+    .qv-variants-list {
+      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    }
+
+    .qv-quick-actions {
+      flex-wrap: wrap;
+    }
+  }
+</style>

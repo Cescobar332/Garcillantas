@@ -1,0 +1,119 @@
+---
+const payMethods = [
+  {
+    name: 'Covifactura',
+    logo: '/images/paymethods/covifactura.webp',
+    url: 'https://www.covifactura.com/'
+  },
+  {
+    name: 'Sistecredito',
+    logo: '/images/paymethods/sistecredito.webp',
+    url: 'https://www.sistecredito.com/'
+  },
+  {
+    name: 'Addi',
+    logo: '/images/paymethods/addi.webp',
+    url: 'https://co.addi.com/'
+  },
+  {
+    name: 'Visa',
+    logo: '/images/paymethods/visa.webp',
+    url: 'https://www.visa.com.co/'
+  },
+  {
+    name: 'Mastercard',
+    logo: '/images/paymethods/mastercard.webp',
+    url: 'https://www.mastercard.com.co/'
+  }
+];
+---
+
+<section class="pay-methods">
+  <div class="container">
+    <h2>Métodos de Pago</h2>
+    <div class="pay-methods-grid">
+      {
+        payMethods.map(method => (
+          <a href={method.url} target="_blank" rel="noopener noreferrer" class="pay-method-link">
+            <img 
+              src={method.logo} 
+              alt={`Logo ${method.name}`} 
+              class="pay-method-image"
+            />
+          </a>
+        ))
+      }
+    </div>
+  </div>
+</section>
+
+<style>
+  .pay-methods {
+    width: 100%;
+    padding: 2rem 0;
+  }
+
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1rem;
+  }
+
+  .pay-methods h2 {
+    font-size: 2em;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 2rem;
+    color: var(--secondary-color);
+    font-family: var(--font-family);
+  }
+
+  .pay-methods-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    align-items: center;
+    justify-items: center;
+  }
+
+  .pay-method-link {
+    transition: all 0.3s ease;
+    padding: 1rem;
+    display: block;
+    transform: translateY(0);
+    filter: drop-shadow(0 0 0 rgba(0, 0, 0, 0));
+  }
+
+  .pay-method-link:hover {
+    opacity: 1;
+    transform: translateY(-5px);
+    filter: drop-shadow(0 5px 15px rgba(0, 0, 0, 0.1));
+  }
+
+  .pay-method-image {
+    height: 3rem;
+    width: auto;
+    object-fit: contain;
+    filter: grayscale(100%) brightness(500%);
+    transition: filter 0.3s ease;
+  }
+
+  .pay-method-link:hover .pay-method-image {
+    transform: scale(1.1);
+    filter: grayscale(0%) brightness(100%);
+  }
+
+  @media (min-width: 768px) {
+    .pay-methods h2 {
+      font-size: 1.875rem;
+    }
+
+    .pay-methods-grid {
+      grid-template-columns: repeat(5, 1fr);
+    }
+
+    .pay-method-image {
+      height: 4rem;
+    }
+  }
+</style>

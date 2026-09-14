@@ -1,0 +1,331 @@
+---
+interface Props {
+  totalFilters?: number;
+}
+
+const { totalFilters = 0 } = Astro.props;
+---
+
+<div class="filter-toggle-container">
+  <button class="filter-toggle-btn" id="filter-toggle-btn" aria-label="Mostrar filtros">
+    <div class="btn-content">
+      <div class="btn-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+        </svg>
+      </div>
+      <span class="btn-text">Filtros</span>
+      <div class="filter-count" id="filter-count" style="display: none;">
+        <span id="filter-count-number">0</span>
+      </div>
+    </div>
+    <div class="btn-ripple"></div>
+  </button>
+  
+  <div class="filter-summary" id="filter-summary" style="display: none;">
+    <div class="summary-content">
+      <span class="summary-text">Filtros activos</span>
+      <div class="active-filters-preview" id="active-filters-preview"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+class FilterToggle {
+  constructor() {
+    this.toggleBtn = document.getElementById('filter-toggle-btn');
+    this.filterCount = document.getElementById('filter-count');
+    this.filterCountNumber = document.getElementById('filter-count-number');
+    this.filterSummary = document.getElementById('filter-summary');
+    this.activeFiltersPreview = document.getElementById('active-filters-preview');
+    
+    this.activeFilters = new Map();
+    
+    this.init();
+  }
+
+  init() {
+    // Add ripple effect
+    this.toggleBtn?.addEventListener('click', this.handleClick.bind(this));
+    
+    // Listen for filter changes
+    document.addEventListener('filtersChanged', this.updateFilterDisplay.bind(this));
+    document.addEventListener('filterAdded', this.handleFilterAdded.bind(this));
+    document.addEventListener('filterRemoved', this.handleFilterRemoved.bind(this));
+    
+    // Initial update
+    this.updateFilterDisplay();
+  }
+
+  handleClick(e) {
+    // Create ripple effect
+    this.createRipple(e);
+    
+    // Dispatch toggle event
+    document.dispatchEvent(new CustomEvent('mobileFiltersToggle'));
+  }
+
+  createRipple(e) {
+    const ripple = this.toggleBtn.querySelector('.btn-ripple');
+    const rect = this.toggleBtn.getBoundingClientRect();
+    const size = Math.max(rect.width, rect.height);
+    const x = e.clientX - rect.left - size / 2;
+    const y = e.clientY - rect.top - size / 2;
+    
+    ripple.style.width = ripple.style.height = size + 'px';
+    ripple.style.left = x + 'px';
+    ripple.style.top = y + 'px';
+    ripple.classList.add('ripple-animate');
+    
+    setTimeout(() => {
+      ripple.classList.remove('ripple-animate');
+    }, 600);
+  }
+
+  handleFilterAdded(e) {
+    const { type, value, label } = e.detail;
+    this.activeFilters.set(`${type}-${value}`, { type, value, label });
+    this.updateFilterDisplay();
+  }
+
+  handleFilterRemoved(e) {
+    const { type, value } = e.detail;
+    this.activeFilters.delete(`${type}-${value}`);
+    this.updateFilterDisplay();
+  }
+
+  updateFilterDisplay() {
+    const count = this.activeFilters.size;
+    
+    if (count > 0) {
+      this.filterCount.style.display = 'flex';
+      this.filterCountNumber.textContent = count.toString();
+      this.filterSummary.style.display = 'block';
+      this.updateFilterPreview();
+    } else {
+      this.filterCount.style.display = 'none';
+      this.filterSummary.style.display = 'none';
+    }
+    
+    // Update button state
+    this.toggleBtn.classList.toggle('has-filters', count > 0);
+  }
+
+  updateFilterPreview() {
+    const filters = Array.from(this.activeFilters.values()).slice(0, 3);
+    const remaining = Math.max(0, this.activeFilters.size - 3);
+    
+    let previewHTML = filters.map(filter => 
+      `<span class="filter-chip">${filter.label}</span>`
+    ).join('');
+    
+    if (remaining > 0) {
+      previewHTML += `<span class="filter-chip more">+${remaining}</span>`;
+    }
+    
+    this.activeFiltersPreview.innerHTML = previewHTML;
+  }
+}
+
+// Initialize when DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+  new FilterToggle();
+});
+</script>
+
+<style>
+  .filter-toggle-container {
+    display: none;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+
+  .filter-toggle-btn {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 1rem 1.5rem;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 1rem;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(13, 75, 160, 0.3);
+  }
+
+  .filter-toggle-btn:hover {
+    background: #1e40af;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(13, 75, 160, 0.4);
+  }
+
+  .filter-toggle-btn:active {
+    transform: translateY(0);
+  }
+
+  .filter-toggle-btn.has-filters {
+    background: linear-gradient(135deg, var(--primary-color) 0%, #1e40af 100%);
+    box-shadow: 0 4px 20px rgba(13, 75, 160, 0.4);
+  }
+
+  .btn-content {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    position: relative;
+    z-index: 2;
+  }
+
+  .btn-icon {
+    display: flex;
+    align-items: center;
+    transition: transform 0.3s ease;
+  }
+
+  .filter-toggle-btn:hover .btn-icon {
+    transform: scale(1.1);
+  }
+
+  .btn-text {
+    font-weight: 600;
+    letter-spacing: 0.025em;
+  }
+
+  .filter-count {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    height: 24px;
+    background: var(--secondary-color);
+    color: var(--primary-color);
+    font-size: 0.75rem;
+    font-weight: 700;
+    border-radius: 12px;
+    padding: 0 0.5rem;
+    animation: bounceIn 0.3s ease;
+  }
+
+  .btn-ripple {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(0);
+    pointer-events: none;
+  }
+
+  .btn-ripple.ripple-animate {
+    animation: ripple 0.6s ease-out;
+  }
+
+  .filter-summary {
+    background: rgba(13, 75, 160, 0.05);
+    border: 1px solid rgba(13, 75, 160, 0.1);
+    border-radius: 0.75rem;
+    padding: 0.75rem 1rem;
+    animation: slideDown 0.3s ease;
+  }
+
+  .summary-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .summary-text {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--primary-color);
+  }
+
+  .active-filters-preview {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .filter-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.75rem;
+    background: var(--primary-color);
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 500;
+    border-radius: 1rem;
+    white-space: nowrap;
+  }
+
+  .filter-chip.more {
+    background: var(--secondary-color);
+    color: var(--primary-color);
+    font-weight: 600;
+  }
+
+  @keyframes bounceIn {
+    0% {
+      transform: scale(0);
+      opacity: 0;
+    }
+    50% {
+      transform: scale(1.2);
+      opacity: 1;
+    }
+    100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+
+  @keyframes ripple {
+    to {
+      transform: scale(4);
+      opacity: 0;
+    }
+  }
+
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Show only on mobile */
+  @media (max-width: 768px) {
+    .filter-toggle-container {
+      display: flex;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .filter-toggle-btn {
+      padding: 0.875rem 1.25rem;
+      font-size: 0.9375rem;
+    }
+
+    .btn-content {
+      gap: 0.5rem;
+    }
+
+    .filter-summary {
+      padding: 0.625rem 0.875rem;
+    }
+
+    .filter-chip {
+      padding: 0.1875rem 0.625rem;
+      font-size: 0.6875rem;
+    }
+  }
+</style>

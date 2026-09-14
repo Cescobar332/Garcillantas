@@ -1,0 +1,844 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import CatalogFilters from '@/components/CatalogFilters.astro';
+import CatalogControls from '@/components/CatalogControls.astro';
+import CatalogPagination from '@/components/CatalogPagination.astro';
+import ProductCard from '@/components/ProductCard.astro';
+import AdvancedSearch from '@/components/AdvancedSearch.astro';
+import { getAllProducts, type Product } from '@/lib/contentful';
+
+const title = 'Resultados de Búsqueda | Garcillantas';
+const description = 'Resultados de búsqueda en nuestro catálogo de llantas';
+
+// Get search parameters from URL
+const url = Astro.url;
+const searchQuery = url.searchParams.get('q') || '';
+const selectedBrand = url.searchParams.get('marca') || '';
+const selectedRim = url.searchParams.get('rin') || '';
+const selectedWidth = url.searchParams.get('ancho') || '';
+
+const products = await getAllProducts();
+
+// Filter products based on search parameters
+let filteredProducts = products;
+
+if (searchQuery) {
+  filteredProducts = products.filter((product: Product) => {
+    const searchTerm = searchQuery.toLowerCase().trim();
+    
+    const brand = Array.isArray(product.fields.brand) ? product.fields.brand : [product.fields.brand];
+    const brandText = brand.join(' ').toLowerCase();
+    
+    const basicFields = [
+      product.fields.productName,
+      brandText,
+      product.fields.model,
+      Array.isArray(product.fields.category) ? product.fields.category.join(' ') : product.fields.category
+    ].filter(field => field).join(' ').toLowerCase();
+    
+    const variants = product.fields.variants || [];
+    const dimensionFields = variants.flatMap(variant => [
+      variant.fields.rimSize ? `${variant.fields.rimSize}"` : '',
+      variant.fields.rimSize ? `R${variant.fields.rimSize}` : '',
+      variant.fields.rimSize ? `Rin ${variant.fields.rimSize}` : '',
+      variant.fields.width ? `${variant.fields.width}` : '',
+      ...(Array.isArray(variant.fields.tireType) ? variant.fields.tireType : [variant.fields.tireType || '']),
+      ...(Array.isArray(variant.fields.seasonUsage) ? variant.fields.seasonUsage : [variant.fields.seasonUsage || ''])
+    ]).filter(field => field).join(' ').toLowerCase();
+    
+    const allSearchFields = `${basicFields} ${dimensionFields}`;
+    
+    if (allSearchFields.includes(searchTerm)) return true;
+    
+    if (/^\d+[\s\/]*\d*[\s\/]*\d*$/.test(searchTerm)) {
+      const normalizedSearch = searchTerm.replace(/[\s\/]+/g, '/');
+      const normalizedFields = allSearchFields.replace(/[r\s]/g, '/');
+      if (normalizedFields.includes(normalizedSearch)) return true;
+    }
+    
+    const searchWords = searchTerm.split(/\s+/);
+    return searchWords.every(word => word.length > 0 && allSearchFields.includes(word));
+  });
+}
+
+// Extract filter options from filtered products
+const allBrands = Array.from(new Set(
+  filteredProducts.flatMap((p: Product) => Array.isArray(p.fields.brand) ? p.fields.brand : [p.fields.brand])
+)).sort();
+
+const allRims = Array.from(new Set(
+  filteredProducts.flatMap((p: Product) => (p.fields.variants ?? []).map(v => v.fields.rimSize))
+)).filter((v): v is number => typeof v === 'number').sort((a, b) => a - b);
+
+const allWidths = Array.from(new Set(
+  filteredProducts.flatMap((p: Product) => (p.fields.variants ?? []).map(v => v.fields.width))
+)).filter((v): v is number => typeof v === 'number').sort((a, b) => a - b);
+
+const allProfiles = Array.from(new Set(
+  filteredProducts.flatMap((p: Product) => (p.fields.variants ?? []).map(v => v.fields.aspectRatio))
+)).filter((v): v is number => typeof v === 'number').sort((a, b) => a - b);
+
+const allTypes = Array.from(new Set(
+  filteredProducts.flatMap((p: Product) => (p.fields.variants ?? [])
+    .flatMap(v => Array.isArray(v.fields.tireType) ? v.fields.tireType : (v.fields.tireType ? [v.fields.tireType] : [])))
+)).sort();
+
+const allSeasons = Array.from(new Set(
+  filteredProducts.flatMap((p: Product) => (p.fields.variants ?? [])
+    .flatMap(v => Array.isArray(v.fields.seasonUsage) ? v.fields.seasonUsage : (v.fields.seasonUsage ? [v.fields.seasonUsage] : [])))
+)).sort();
+---
+
+<Layout title={title} description={description}>
+  <div class="search-results-page">
+    <!-- Breadcrumb -->
+    <nav class="breadcrumb">
+      <div class="breadcrumb-container">
+        <a href="/">Inicio</a>
+        <span class="separator">›</span>
+        <a href="/catalogo">Catálogo</a>
+        <span class="separator">›</span>
+        <span class="current">Resultados de búsqueda</span>
+      </div>
+    </nav>
+
+    <!-- Search Results Header -->
+    <section class="search-header">
+      <div class="search-header-content">
+        <h1>Resultados de búsqueda</h1>
+        {searchQuery && (
+          <p class="search-query">
+            Resultados para: <strong>"{searchQuery}"</strong>
+          </p>
+        )}
+        <p class="results-count">
+          {filteredProducts.length === 0 
+            ? 'No se encontraron productos' 
+            : `${filteredProducts.length} producto${filteredProducts.length !== 1 ? 's' : ''} encontrado${filteredProducts.length !== 1 ? 's' : ''}`
+          }
+        </p>
+        
+        <!-- Search Options Tabs -->
+        <div class="search-options">
+          <div class="search-tabs">
+            <button class="search-tab active" data-tab="general">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"/>
+                <path d="m21 21-4.35-4.35"/>
+              </svg>
+              Búsqueda General
+            </button>
+            <button class="search-tab" data-tab="size">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="16"/>
+                <line x1="8" y1="12" x2="16" y2="12"/>
+              </svg>
+              Búsqueda por Medidas
+            </button>
+          </div>
+          
+          <div class="search-content">
+            <div class="search-panel active" id="general-search">
+              <AdvancedSearch products={products} />
+            </div>
+            
+            <div class="search-panel" id="size-search">
+              <div class="tire-search-by-size">
+                <div class="search-form">
+                  <div class="search-field">
+                    <select id="tire-width" class="tire-select">
+                      <option value="">Selecciona ancho</option>
+                      {allWidths.map(width => (
+                        <option value={width}>{width}</option>
+                      ))}
+                    </select>
+                    <svg class="dropdown-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="6,9 12,15 18,9"></polyline>
+                    </svg>
+                  </div>
+
+                  <div class="search-field">
+                    <select id="tire-profile" class="tire-select">
+                      <option value="">Selecciona perfil</option>
+                      {allProfiles.map(profile => (
+                        <option value={profile}>{profile}</option>
+                      ))}
+                    </select>
+                    <svg class="dropdown-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="6,9 12,15 18,9"></polyline>
+                    </svg>
+                  </div>
+
+                  <div class="search-field">
+                    <select id="tire-rim" class="tire-select">
+                      <option value="">Selecciona rin</option>
+                      {allRims.map(rim => (
+                        <option value={rim}>{rim}</option>
+                      ))}
+                    </select>
+                    <svg class="dropdown-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="6,9 12,15 18,9"></polyline>
+                    </svg>
+                  </div>
+                </div>
+
+                <div class="size-search-actions">
+                  <button class="btn-search-size" onclick="performSizeSearch()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="11" cy="11" r="8"/>
+                      <path d="m21 21-4.35-4.35"/>
+                    </svg>
+                    Buscar
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Main Content -->
+    <section class="search-main">
+      <div class="search-container">
+        
+        <!-- Filters Sidebar -->
+        <aside class="filters-sidebar">
+          <CatalogFilters 
+            allBrands={allBrands}
+            allRims={allRims}
+            allWidths={allWidths}
+            allTypes={allTypes}
+            allSeasons={allSeasons}
+            totalProducts={filteredProducts.length}
+          />
+        </aside>
+
+        <!-- Results Section -->
+        <main class="results-section">
+          <!-- Controls -->
+          <CatalogControls totalProducts={filteredProducts.length} />
+
+          {filteredProducts.length > 0 ? (
+            <!-- Products Grid -->
+            <div class="results-grid view-grid" id="results-grid">
+              {filteredProducts.map((product: Product) => (
+                <ProductCard 
+                  product={product} 
+                  viewMode="grid" 
+                  showQuickView={true}
+                  lazyLoad={true}
+                />
+              ))}
+            </div>
+          ) : (
+            <!-- Empty State -->
+            <div class="empty-state">
+              <div class="empty-content">
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <circle cx="11" cy="11" r="8"/>
+                  <path d="m21 21-4.35-4.35"/>
+                </svg>
+                <h3>No se encontraron productos</h3>
+                <p>Intenta con otros términos de búsqueda o explora nuestro catálogo completo</p>
+                <div class="empty-actions">
+                  <a href="/catalogo" class="btn-primary">Ver catálogo completo</a>
+                  <button onclick="clearSearch()" class="btn-secondary">Nueva búsqueda</button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <!-- Pagination -->
+          <CatalogPagination totalProducts={filteredProducts.length} />
+        </main>
+      </div>
+    </section>
+  </div>
+</Layout>
+
+<script>
+function clearSearch() {
+  const searchInput = document.getElementById('advanced-search-input') as HTMLInputElement;
+  if (searchInput) {
+    searchInput.value = '';
+    searchInput.focus();
+    // Trigger search clear through the advanced search component
+    if ((window as any).advancedSearch) {
+      (window as any).advancedSearch.clearSearch();
+    }
+  }
+}
+
+function performSizeSearch() {
+  const widthSelect = document.getElementById('tire-width') as HTMLSelectElement;
+  const profileSelect = document.getElementById('tire-profile') as HTMLSelectElement;
+  const rimSelect = document.getElementById('tire-rim') as HTMLSelectElement;
+  
+  if (!widthSelect || !profileSelect || !rimSelect) return;
+  
+  const width = widthSelect.value;
+  const profile = profileSelect.value;
+  const rim = rimSelect.value;
+  
+  if (!width && !profile && !rim) {
+    alert('Por favor selecciona al menos una medida para buscar');
+    return;
+  }
+  
+  let searchQuery = '';
+  if (width && profile && rim) {
+    searchQuery = `${width}/${profile}R${rim}`;
+  } else {
+    const parts = [];
+    if (width) parts.push(width);
+    if (profile) parts.push(profile);
+    if (rim) parts.push(`R${rim}`);
+    searchQuery = parts.join(' ');
+  }
+  
+  // Navigate to search results with the tire size query
+  const searchUrl = new URL('/catalogo/busqueda', window.location.origin);
+  searchUrl.searchParams.set('q', searchQuery);
+  window.location.href = searchUrl.toString();
+}
+
+// Tab switching functionality
+function initSearchTabs() {
+  const tabs = document.querySelectorAll('.search-tab');
+  const panels = document.querySelectorAll('.search-panel');
+  
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      const targetTab = tab.getAttribute('data-tab');
+      
+      // Remove active class from all tabs and panels
+      tabs.forEach(t => t.classList.remove('active'));
+      panels.forEach(p => p.classList.remove('active'));
+      
+      // Add active class to clicked tab and corresponding panel
+      tab.classList.add('active');
+      const targetPanel = document.getElementById(`${targetTab}-search`);
+      if (targetPanel) {
+        targetPanel.classList.add('active');
+      }
+    });
+  });
+}
+
+// Set initial search value when page loads
+document.addEventListener('DOMContentLoaded', () => {
+  const urlParams = new URLSearchParams(window.location.search);
+  const searchQuery = urlParams.get('q');
+  
+  if (searchQuery) {
+    const searchInput = document.getElementById('advanced-search-input') as HTMLInputElement;
+    if (searchInput) {
+      searchInput.value = searchQuery;
+    }
+    
+    // Check if the search query looks like tire dimensions
+    const tireDimensionPattern = /^(\d+)\/(\d+)R(\d+)$/;
+    const match = searchQuery.match(tireDimensionPattern);
+    
+    if (match) {
+      // Switch to size search tab and populate values
+      const generalTab = document.querySelector('[data-tab="general"]');
+      const sizeTab = document.querySelector('[data-tab="size"]');
+      const generalPanel = document.getElementById('general-search');
+      const sizePanel = document.getElementById('size-search');
+      
+      if (generalTab && sizeTab && generalPanel && sizePanel) {
+        generalTab.classList.remove('active');
+        sizeTab.classList.add('active');
+        generalPanel.classList.remove('active');
+        sizePanel.classList.add('active');
+        
+        // Populate tire size selects
+        setTimeout(() => {
+          const widthSelect = document.getElementById('tire-width') as HTMLSelectElement;
+          const profileSelect = document.getElementById('tire-profile') as HTMLSelectElement;
+          const rimSelect = document.getElementById('tire-rim') as HTMLSelectElement;
+          
+          if (widthSelect && profileSelect && rimSelect) {
+            widthSelect.value = match[1];
+            profileSelect.value = match[2];
+            rimSelect.value = match[3];
+          }
+        }, 100);
+      }
+    }
+  }
+  
+  // Initialize tab functionality
+  initSearchTabs();
+});
+</script>
+
+<style>
+  .search-results-page {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  }
+
+  .breadcrumb {
+    background: white;
+    border-bottom: 1px solid #e5e7eb;
+    padding: 1rem 0;
+  }
+
+  .breadcrumb-container {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    padding: 0 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+  }
+
+  .breadcrumb a {
+    color: var(--primary-color);
+    text-decoration: none;
+    transition: color 0.2s ease;
+  }
+
+  .breadcrumb a:hover {
+    color: #1e40af;
+  }
+
+  .separator {
+    color: #9ca3af;
+  }
+
+  .current {
+    color: #6b7280;
+    font-weight: 500;
+  }
+
+  .search-header {
+    background: linear-gradient(135deg, var(--primary-color) 0%, #1e40af 100%);
+    color: white;
+    padding: 2rem 1rem;
+    text-align: center;
+  }
+
+  .search-header-content {
+    max-width: var(--max-width);
+    margin: 0 auto;
+  }
+
+  .search-header h1 {
+    font-size: clamp(2rem, 4vw, 2.5rem);
+    margin-bottom: 1rem;
+    font-weight: 700;
+  }
+
+  .search-query {
+    font-size: 1.125rem;
+    margin-bottom: 0.5rem;
+    opacity: 0.9;
+  }
+
+  .results-count {
+    font-size: 1rem;
+    margin-bottom: 2rem;
+    opacity: 0.8;
+  }
+
+  .search-options {
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  .search-tabs {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .search-tab {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: 0.75rem;
+    color: rgba(255, 255, 255, 0.8);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+  }
+
+  .search-tab:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.4);
+    color: white;
+    transform: translateY(-1px);
+  }
+
+  .search-tab.active {
+    background: white;
+    border-color: white;
+    color: var(--primary-color);
+    box-shadow: 0 4px 15px rgba(255, 255, 255, 0.3);
+  }
+
+  .search-tab svg {
+    flex-shrink: 0;
+  }
+
+  .search-content {
+    position: relative;
+  }
+
+  .search-panel {
+    display: none;
+    animation: fadeIn 0.3s ease;
+  }
+
+  .search-panel.active {
+    display: block;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Advanced search component styling override for search results page */
+  .search-options :global(.advanced-search) {
+    max-width: 100%;
+  }
+
+  .search-options :global(#advanced-search-input) {
+    background: white;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    color: #1f2937;
+  }
+
+  .search-options :global(#advanced-search-input:focus) {
+    border-color: rgba(255, 255, 255, 0.8);
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.2);
+  }
+
+  .search-options :global(.search-suggestions) {
+    background: white;
+    color: #374151;
+    border: 1px solid #e5e7eb;
+  }
+
+  .search-options :global(.suggestion-item) {
+    color: #374151;
+  }
+
+  .search-options :global(.suggestion-item:hover) {
+    background: #f3f4f6;
+    color: #1f2937;
+  }
+
+  /* Size search styling */
+  .tire-search-by-size {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    color: white;
+  }
+
+  .tire-search-by-size .search-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .tire-search-by-size .search-field {
+    position: relative;
+  }
+
+  .tire-search-by-size .tire-select {
+    width: 100%;
+    padding: 1rem 3rem 1rem 1rem;
+    border: none;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    background: white;
+    color: #374151;
+    cursor: pointer;
+    appearance: none;
+    transition: all 0.2s ease;
+    outline: none;
+  }
+
+  .tire-search-by-size .tire-select:focus {
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.3);
+    transform: translateY(-1px);
+  }
+
+  .tire-search-by-size .tire-select:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+
+  .tire-search-by-size .dropdown-icon {
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #9ca3af;
+    pointer-events: none;
+    transition: transform 0.2s ease;
+  }
+
+  .tire-search-by-size .search-field:hover .dropdown-icon {
+    color: #6b7280;
+  }
+
+  .tire-search-by-size .tire-select:focus + .dropdown-icon {
+    transform: translateY(-50%) rotate(180deg);
+    color: #f59e0b;
+  }
+
+  /* Responsive design for tire search */
+  @media (min-width: 768px) {
+    .tire-search-by-size .search-form {
+      flex-direction: row;
+      gap: 0.75rem;
+    }
+
+    .tire-search-by-size .search-field {
+      flex: 1;
+    }
+  }
+
+  .size-search-actions {
+    display: flex;
+    justify-content: center;
+    margin-top: 1rem;
+  }
+
+  .btn-search-size {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 2rem;
+    background: white;
+    color: var(--primary-color);
+    border: none;
+    border-radius: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(255, 255, 255, 0.3);
+  }
+
+  .btn-search-size:hover {
+    background: #f8fafc;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 255, 255, 0.4);
+  }
+
+  .btn-search-size:active {
+    transform: translateY(0);
+  }
+
+  .search-main {
+    padding: 2rem 0;
+  }
+
+  .search-container {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    padding: 0 1rem;
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 2rem;
+    align-items: start;
+  }
+
+  .filters-sidebar {
+    position: sticky;
+    top: 2rem;
+  }
+
+  .results-section {
+    min-height: 600px;
+  }
+
+  .results-grid {
+    display: grid;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .results-grid.view-grid {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  }
+
+  .results-grid.view-list {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .empty-state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+    text-align: center;
+  }
+
+  .empty-content {
+    max-width: 400px;
+  }
+
+  .empty-content svg {
+    color: #9ca3af;
+    margin-bottom: 1rem;
+  }
+
+  .empty-content h3 {
+    font-size: 1.5rem;
+    color: #374151;
+    margin-bottom: 0.5rem;
+  }
+
+  .empty-content p {
+    color: #6b7280;
+    margin-bottom: 2rem;
+  }
+
+  .empty-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .btn-primary, .btn-secondary {
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+    font-size: 0.875rem;
+  }
+
+  .btn-primary {
+    background: var(--primary-color);
+    color: white;
+  }
+
+  .btn-primary:hover {
+    background: #1e40af;
+  }
+
+  .btn-secondary {
+    background: white;
+    color: var(--primary-color);
+    border: 1px solid var(--primary-color);
+  }
+
+  .btn-secondary:hover {
+    background: var(--primary-color);
+    color: white;
+  }
+
+  @media (max-width: 1024px) {
+    .search-container {
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+
+    .filters-sidebar {
+      position: static;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .search-header {
+      padding: 1.5rem 1rem;
+    }
+
+    .search-tabs {
+      flex-direction: column;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+
+    .search-tab {
+      padding: 0.875rem 1rem;
+      font-size: 0.9rem;
+      justify-content: center;
+    }
+
+    .search-options {
+      max-width: 100%;
+    }
+
+    .tire-search-by-size .search-form {
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .btn-search-size {
+      padding: 0.875rem 1.5rem;
+      font-size: 0.9rem;
+    }
+
+    .search-main {
+      padding: 1rem 0;
+    }
+
+    .search-container {
+      padding: 0 0.5rem;
+    }
+
+    .results-grid.view-grid {
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 1rem;
+    }
+
+    .empty-actions {
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .btn-primary, .btn-secondary {
+      width: 100%;
+      max-width: 200px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .search-tabs {
+      gap: 0.5rem;
+    }
+
+    .search-tab {
+      padding: 0.75rem 0.875rem;
+      font-size: 0.85rem;
+    }
+
+    .search-tab svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .search-options {
+      padding: 0 0.5rem;
+    }
+
+    .btn-search-size {
+      padding: 0.75rem 1.25rem;
+      font-size: 0.85rem;
+    }
+  }
+</style>

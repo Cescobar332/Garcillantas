@@ -1,0 +1,1040 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import CatalogFilters from '@/components/CatalogFilters.astro';
+import AdvancedSearch from '@/components/AdvancedSearch.astro';
+import CatalogControls from '@/components/CatalogControls.astro';
+import ProductCard from '@/components/ProductCard.astro';
+import { getAllProducts, type Product } from '@/lib/contentful';
+
+const title = 'Catálogo de Productos | Garcillantas';
+const description = 'Explora nuestro catálogo completo de llantas con filtros avanzados, búsqueda inteligente y comparación de productos.';
+
+const products = await getAllProducts();
+
+// Extract filter options
+const allBrands = Array.from(new Set(
+  products.flatMap((p: Product) => Array.isArray(p.fields.brand) ? p.fields.brand : [p.fields.brand])
+)).sort();
+
+const allRims = Array.from(new Set(
+  products.flatMap((p: Product) => (p.fields.variants ?? []).map(v => v.fields.rimSize))
+)).filter((v): v is number => typeof v === 'number').sort((a, b) => a - b);
+
+const allWidths = Array.from(new Set(
+  products.flatMap((p: Product) => (p.fields.variants ?? []).map(v => v.fields.width))
+)).filter((v): v is number => typeof v === 'number').sort((a, b) => a - b);
+
+const allTypes = Array.from(new Set(
+  products.flatMap((p: Product) => (p.fields.variants ?? [])
+    .flatMap(v => Array.isArray(v.fields.tireType) ? v.fields.tireType : (v.fields.tireType ? [v.fields.tireType] : [])))
+)).sort();
+
+const allSeasons = Array.from(new Set(
+  products.flatMap((p: Product) => (p.fields.variants ?? [])
+    .flatMap(v => Array.isArray(v.fields.seasonUsage) ? v.fields.seasonUsage : (v.fields.seasonUsage ? [v.fields.seasonUsage] : [])))
+)).sort();
+---
+
+<Layout title={title} description={description}>
+  <div class="catalog-page">
+    <!-- Hero Section -->
+    <section class="catalog-hero">
+      <div class="hero-content">
+        <h1>Catálogo de Productos</h1>
+        <p class="hero-description">
+          Encuentra la llanta perfecta para tu vehículo con nuestro sistema de búsqueda avanzada
+        </p>
+        
+        <!-- Advanced Search Component -->
+        <div class="hero-search">
+          <AdvancedSearch products={products} />
+        </div>
+      </div>
+    </section>
+
+    <!-- Main Catalog Section -->
+    <section class="catalog-main">
+      <div class="catalog-container">
+        
+        <!-- Mobile Filter Toggle Button -->
+        <div class="mobile-filter-toggle">
+          <button class="filter-toggle-btn" id="filter-toggle-btn" aria-label="Mostrar filtros">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+            </svg>
+            <span>Filtros</span>
+            <span class="filter-count" id="filter-count" style="display: none;"></span>
+          </button>
+        </div>
+
+        <!-- Filters Sidebar -->
+        <aside class="filters-sidebar" id="filters-sidebar">
+          <div class="filters-header-mobile">
+            <h3>Filtrar productos</h3>
+            <button class="close-filters-btn" id="close-filters-btn" aria-label="Cerrar filtros">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"/>
+                <line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+          </div>
+          <CatalogFilters 
+            allBrands={allBrands}
+            allRims={allRims}
+            allWidths={allWidths}
+            allTypes={allTypes}
+            allSeasons={allSeasons}
+            totalProducts={products.length}
+          />
+        </aside>
+
+        <!-- Filters Overlay -->
+        <div class="filters-overlay" id="filters-overlay"></div>
+
+        <!-- Products Section -->
+        <main class="products-section">
+          <!-- Catalog Controls -->
+          <CatalogControls totalProducts={products.length} />
+
+          <!-- Products Grid -->
+          <div class="catalog-grid view-grid" id="catalog-grid">
+            {products.map((product: Product) => (
+              <ProductCard 
+                product={product} 
+                viewMode="grid" 
+                showQuickView={true}
+                lazyLoad={true}
+              />
+            ))}
+          </div>
+
+          <!-- Empty State -->
+          <div class="empty-state" id="empty-state" style="display: none;">
+            <div class="empty-content">
+              <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <circle cx="11" cy="11" r="8"/>
+                <path d="m21 21-4.35-4.35"/>
+              </svg>
+              <h3>No se encontraron productos</h3>
+              <p>Intenta ajustar los filtros o realizar una búsqueda diferente</p>
+              <button class="clear-filters-btn" onclick="clearAllFilters()">
+                Limpiar todos los filtros
+              </button>
+            </div>
+          </div>
+
+          <!-- Loading State -->
+          <div class="loading-state" id="loading-state" style="display: none;">
+            <div class="loading-content">
+              <div class="loading-spinner"></div>
+              <p>Cargando productos...</p>
+            </div>
+          </div>
+        </main>
+      </div>
+    </section>
+
+    <!-- Quick View Modal -->
+    <div class="quick-view-modal" id="quick-view-modal">
+      <div class="modal-backdrop" onclick="closeQuickView()"></div>
+      <div class="modal-content">
+        <button class="modal-close" onclick="closeQuickView()">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+        <div class="modal-body" id="quick-view-content">
+          <!-- Quick view content will be loaded here -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Floating Action Buttons -->
+    <div class="floating-actions">
+      <button class="fab compare-fab" id="compare-fab" style="display: none;" onclick="openComparison()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 11H5a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2z"/>
+          <path d="M21 11h-4a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2z"/>
+          <path d="M7 21V8a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v13"/>
+        </svg>
+        <span class="fab-label">Comparar (<span id="compare-count">0</span>)</span>
+      </button>
+
+      <button class="fab favorites-fab" id="favorites-fab" style="display: none;" onclick="openFavorites()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+        </svg>
+        <span class="fab-label">Favoritos (<span id="favorites-count">0</span>)</span>
+      </button>
+    </div>
+  </div>
+</Layout>
+
+<script>
+// Catalog Management System
+class CatalogManager {
+  constructor() {
+    this.products = [];
+    this.filteredProducts = [];
+    this.currentFilters = {};
+    this.currentSort = 'relevance';
+    this.currentView = 'grid';
+    this.currentPage = 1;
+    this.itemsPerPage = 24;
+    this.favorites = this.loadFavorites();
+    this.compareList = this.loadCompareList();
+    
+    this.init();
+  }
+
+  init() {
+    this.loadProducts();
+    this.setupEventListeners();
+    this.updateFabVisibility();
+  }
+
+  loadProducts() {
+    const productCards = document.querySelectorAll('.product-card');
+    this.products = Array.from(productCards).map(card => ({
+      element: card,
+      id: card.dataset.productId,
+      slug: card.dataset.slug,
+      name: card.dataset.name,
+      brand: card.dataset.brand,
+      model: card.dataset.model,
+      category: card.dataset.category,
+      rims: card.dataset.rims ? card.dataset.rims.split(',') : [],
+      widths: card.dataset.widths ? card.dataset.widths.split(',') : [],
+      types: card.dataset.types ? card.dataset.types.split(',') : [],
+      seasons: card.dataset.seasons ? card.dataset.seasons.split(',') : [],
+      minPrice: card.dataset.minPrice ? parseFloat(card.dataset.minPrice) : null,
+      maxPrice: card.dataset.maxPrice ? parseFloat(card.dataset.maxPrice) : null,
+      featured: card.dataset.featured === 'true',
+      stock: parseInt(card.dataset.stock) || 0
+    }));
+    
+    this.filteredProducts = [...this.products];
+    this.applyFiltersAndSort();
+  }
+
+  setupEventListeners() {
+    // Filter events
+    document.addEventListener('catalogSearch', (e) => {
+      this.currentFilters.search = e.detail.query;
+      this.applyFiltersAndSort();
+    });
+
+    // Sort and view events
+    document.addEventListener('sortChanged', (e) => {
+      this.currentSort = e.detail.sort;
+      this.applyFiltersAndSort();
+    });
+
+    document.addEventListener('viewModeChanged', (e) => {
+      this.currentView = e.detail.view;
+      this.updateView();
+    });
+
+    document.addEventListener('itemsPerPageChanged', (e) => {
+      this.itemsPerPage = e.detail.itemsPerPage;
+      this.currentPage = 1;
+      this.applyPagination();
+    });
+
+    document.addEventListener('paginationChanged', (e) => {
+      this.currentPage = e.detail.page;
+      this.applyPagination();
+    });
+
+    // Product interaction events
+    document.addEventListener('click', (e) => {
+      const quickViewBtn = e.target.closest('.quick-view-btn');
+      const favoriteBtn = e.target.closest('.favorite-btn');
+      const compareBtn = e.target.closest('.compare-btn');
+
+      if (quickViewBtn) {
+        this.openQuickView(quickViewBtn.dataset.productSlug);
+      } else if (favoriteBtn) {
+        this.toggleFavorite(favoriteBtn.dataset.productId);
+      } else if (compareBtn) {
+        this.toggleCompare(compareBtn.dataset.productId);
+      }
+    });
+  }
+
+  applyFiltersAndSort() {
+    // Apply filters
+    this.filteredProducts = this.products.filter(product => {
+      // Search filter
+      if (this.currentFilters.search) {
+        const searchTerm = this.currentFilters.search.toLowerCase();
+        const searchFields = [
+          product.name,
+          product.brand,
+          product.model,
+          product.category,
+          ...product.rims,
+          ...product.widths,
+          ...product.types,
+          ...product.seasons
+        ].join(' ').toLowerCase();
+        
+        if (!searchFields.includes(searchTerm)) return false;
+      }
+
+      // Other filters would be applied here
+      return true;
+    });
+
+    // Apply sorting
+    this.sortProducts();
+    
+    // Update display
+    this.updateProductDisplay();
+    this.applyPagination();
+    
+    // Dispatch event for other components
+    document.dispatchEvent(new CustomEvent('catalogFiltered', {
+      detail: {
+        visibleCount: this.filteredProducts.length,
+        totalCount: this.products.length
+      }
+    }));
+  }
+
+  sortProducts() {
+    this.filteredProducts.sort((a, b) => {
+      switch (this.currentSort) {
+        case 'name-asc':
+          return a.name.localeCompare(b.name);
+        case 'name-desc':
+          return b.name.localeCompare(a.name);
+        case 'price-asc':
+          return (a.minPrice || 0) - (b.minPrice || 0);
+        case 'price-desc':
+          return (b.maxPrice || 0) - (a.maxPrice || 0);
+        case 'brand-asc':
+          return a.brand.localeCompare(b.brand);
+        case 'brand-desc':
+          return b.brand.localeCompare(a.brand);
+        case 'featured':
+          return b.featured - a.featured;
+        case 'newest':
+          return 0;
+        default:
+          return 0;
+      }
+    });
+  }
+
+  updateProductDisplay() {
+    const catalogGrid = document.getElementById('catalog-grid');
+    const emptyState = document.getElementById('empty-state');
+    
+    if (this.filteredProducts.length === 0) {
+      catalogGrid.style.display = 'none';
+      emptyState.style.display = 'flex';
+    } else {
+      catalogGrid.style.display = 'grid';
+      emptyState.style.display = 'none';
+    }
+  }
+
+  applyPagination() {
+    if (this.itemsPerPage === 'all') {
+      this.filteredProducts.forEach(product => {
+        product.element.style.display = '';
+      });
+      return;
+    }
+
+    const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+    const endIndex = startIndex + this.itemsPerPage;
+
+    this.filteredProducts.forEach((product, index) => {
+      product.element.style.display = (index >= startIndex && index < endIndex) ? '' : 'none';
+    });
+  }
+
+  updateView() {
+    const catalogGrid = document.getElementById('catalog-grid');
+    catalogGrid.className = `catalog-grid view-${this.currentView}`;
+    
+    this.products.forEach(product => {
+      product.element.className = `product-card ${this.currentView}`;
+    });
+  }
+
+  toggleFavorite(productId) {
+    const index = this.favorites.indexOf(productId);
+    if (index > -1) {
+      this.favorites.splice(index, 1);
+    } else {
+      this.favorites.push(productId);
+    }
+    
+    this.saveFavorites();
+    this.updateFavoriteButtons();
+    this.updateFabVisibility();
+  }
+
+  toggleCompare(productId) {
+    const index = this.compareList.indexOf(productId);
+    if (index > -1) {
+      this.compareList.splice(index, 1);
+    } else if (this.compareList.length < 4) {
+      this.compareList.push(productId);
+    } else {
+      alert('Máximo 4 productos para comparar');
+      return;
+    }
+    
+    this.saveCompareList();
+    this.updateCompareButtons();
+    this.updateFabVisibility();
+  }
+
+  updateFavoriteButtons() {
+    document.querySelectorAll('.favorite-btn').forEach(btn => {
+      const productId = btn.dataset.productId;
+      btn.classList.toggle('active', this.favorites.includes(productId));
+    });
+  }
+
+  updateCompareButtons() {
+    document.querySelectorAll('.compare-btn').forEach(btn => {
+      const productId = btn.dataset.productId;
+      btn.classList.toggle('active', this.compareList.includes(productId));
+    });
+  }
+
+  updateFabVisibility() {
+    const compareCount = document.getElementById('compare-count');
+    const favoritesCount = document.getElementById('favorites-count');
+    const compareFab = document.getElementById('compare-fab');
+    const favoritesFab = document.getElementById('favorites-fab');
+
+    if (compareCount) compareCount.textContent = this.compareList.length;
+    if (favoritesCount) favoritesCount.textContent = this.favorites.length;
+
+    if (compareFab) compareFab.style.display = this.compareList.length > 0 ? 'flex' : 'none';
+    if (favoritesFab) favoritesFab.style.display = this.favorites.length > 0 ? 'flex' : 'none';
+  }
+
+  openQuickView(slug) {
+    const modal = document.getElementById('quick-view-modal');
+    const content = document.getElementById('quick-view-content');
+    
+    if (content) content.innerHTML = '<div class="loading-spinner"></div>';
+    if (modal) modal.style.display = 'flex';
+    
+    // Load product data (would fetch from API in real implementation)
+    setTimeout(() => {
+      if (content) {
+        content.innerHTML = `
+          <div class="quick-view-product">
+            <h3>Vista rápida del producto</h3>
+            <p>Slug: ${slug}</p>
+            <p>Aquí se cargarían los detalles del producto...</p>
+          </div>
+        `;
+      }
+    }, 500);
+  }
+
+  loadFavorites() {
+    try {
+      return JSON.parse(localStorage.getItem('garcillantas_favorites') || '[]');
+    } catch {
+      return [];
+    }
+  }
+
+  saveFavorites() {
+    try {
+      localStorage.setItem('garcillantas_favorites', JSON.stringify(this.favorites));
+    } catch {
+      // Handle errors silently
+    }
+  }
+
+  loadCompareList() {
+    try {
+      return JSON.parse(localStorage.getItem('garcillantas_compare') || '[]');
+    } catch {
+      return [];
+    }
+  }
+
+  saveCompareList() {
+    try {
+      localStorage.setItem('garcillantas_compare', JSON.stringify(this.compareList));
+    } catch {
+      // Handle errors silently
+    }
+  }
+}
+
+// Global functions
+function closeQuickView() {
+  const modal = document.getElementById('quick-view-modal');
+  if (modal) modal.style.display = 'none';
+}
+
+function clearAllFilters() {
+  // Reset all filters
+  const searchInput = document.getElementById('filter-search');
+  if (searchInput) searchInput.value = '';
+  
+  document.querySelectorAll('.filter-select').forEach(select => {
+    select.value = '';
+  });
+  
+  const priceMin = document.getElementById('filter-price-min');
+  const priceMax = document.getElementById('filter-price-max');
+  if (priceMin) priceMin.value = '';
+  if (priceMax) priceMax.value = '';
+  
+  // Trigger filter update
+  if (window.catalogManager) {
+    window.catalogManager.currentFilters = {};
+    window.catalogManager.applyFiltersAndSort();
+  }
+}
+
+function openComparison() {
+  alert('Función de comparación en desarrollo');
+}
+
+function openFavorites() {
+  alert('Función de favoritos en desarrollo');
+}
+
+// Mobile filters functionality
+function initMobileFilters() {
+  const filterToggleBtn = document.getElementById('filter-toggle-btn');
+  const closeFiltersBtn = document.getElementById('close-filters-btn');
+  const filtersSidebar = document.getElementById('filters-sidebar');
+  const filtersOverlay = document.getElementById('filters-overlay');
+  const filterCount = document.getElementById('filter-count');
+
+  function openMobileFilters() {
+    if (filtersSidebar && filtersOverlay) {
+      filtersSidebar.classList.add('mobile-open');
+      filtersOverlay.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+  }
+
+  function closeMobileFilters() {
+    if (filtersSidebar && filtersOverlay) {
+      filtersSidebar.classList.remove('mobile-open');
+      filtersOverlay.classList.remove('active');
+      document.body.style.overflow = '';
+    }
+  }
+
+  function updateFilterCount() {
+    const activeFilters = document.querySelectorAll('.filter-tag').length;
+    if (filterCount) {
+      if (activeFilters > 0) {
+        filterCount.textContent = activeFilters.toString();
+        filterCount.style.display = 'inline-flex';
+      } else {
+        filterCount.style.display = 'none';
+      }
+    }
+  }
+
+  // Event listeners for mobile filters
+  if (filterToggleBtn) {
+    filterToggleBtn.addEventListener('click', openMobileFilters);
+  }
+
+  if (closeFiltersBtn) {
+    closeFiltersBtn.addEventListener('click', closeMobileFilters);
+  }
+
+  if (filtersOverlay) {
+    filtersOverlay.addEventListener('click', closeMobileFilters);
+  }
+
+  // Close filters on escape key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && filtersSidebar && filtersSidebar.classList.contains('mobile-open')) {
+      closeMobileFilters();
+    }
+  });
+
+  // Update filter count when filters change
+  document.addEventListener('filtersChanged', updateFilterCount);
+  
+  // Close mobile filters when window is resized to desktop
+  window.addEventListener('resize', () => {
+    if (window.innerWidth > 768 && filtersSidebar && filtersSidebar.classList.contains('mobile-open')) {
+      closeMobileFilters();
+    }
+  });
+
+  // Initial filter count update
+  updateFilterCount();
+}
+
+// Initialize when DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+  window.catalogManager = new CatalogManager();
+  initMobileFilters();
+});
+</script>
+
+<style>
+  :root {
+    --primary-color: #0d4ba0;
+    --secondary-color: #ffdd00;
+    --max-width: 1200px;
+    --font-family: 'Inter', sans-serif;
+    --color-text: #333;
+  }
+
+  .catalog-page {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  }
+
+  .catalog-hero {
+    background: linear-gradient(135deg, var(--primary-color) 0%, #1e40af 100%);
+    color: white;
+    padding: 3rem 1rem 2rem;
+    text-align: center;
+  }
+
+  .hero-content {
+    max-width: var(--max-width);
+    margin: 0 auto;
+  }
+
+  .catalog-hero h1 {
+    font-size: clamp(2.5rem, 5vw, 3.5rem);
+    margin-bottom: 1rem;
+    font-weight: 700;
+    color: white;
+  }
+
+  .hero-description {
+    font-size: 1.125rem;
+    opacity: 0.9;
+    margin-bottom: 2rem;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .hero-search {
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  .catalog-main {
+    padding: 2rem 0;
+  }
+
+  .catalog-container {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    padding: 0 1rem;
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 2rem;
+    align-items: start;
+    position: relative;
+  }
+
+  /* Mobile Filter Toggle */
+  .mobile-filter-toggle {
+    display: none;
+    margin-bottom: 1rem;
+  }
+
+  .filter-toggle-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+  }
+
+  .filter-toggle-btn:hover {
+    background: #1e40af;
+    transform: translateY(-1px);
+  }
+
+  .filter-count {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: var(--secondary-color);
+    color: var(--primary-color);
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 0.25rem 0.5rem;
+    border-radius: 1rem;
+    min-width: 20px;
+    text-align: center;
+    line-height: 1;
+  }
+
+  /* Filters Sidebar */
+  .filters-sidebar {
+    position: sticky;
+    top: 2rem;
+    background: white;
+    border-radius: 1rem;
+    padding: 0;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    overflow: visible;
+  }
+
+  .filters-header-mobile {
+    display: none;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  .filters-header-mobile h3 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #111827;
+    margin: 0;
+  }
+
+  .close-filters-btn {
+    background: none;
+    border: none;
+    color: #6b7280;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 0.375rem;
+    transition: all 0.2s ease;
+  }
+
+  .close-filters-btn:hover {
+    background: #f3f4f6;
+    color: #374151;
+  }
+
+  /* Filters Overlay */
+  .filters-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 998;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .filters-overlay.active {
+    opacity: 1;
+  }
+
+  .products-section {
+    min-height: 600px;
+  }
+
+  .products-section {
+    min-height: 600px;
+  }
+
+  .catalog-grid {
+    display: grid;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .catalog-grid.view-grid {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  }
+
+  .catalog-grid.view-list {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .empty-state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+    text-align: center;
+  }
+
+  .empty-content {
+    max-width: 400px;
+  }
+
+  .empty-content svg {
+    color: #9ca3af;
+    margin-bottom: 1rem;
+  }
+
+  .empty-content h3 {
+    font-size: 1.5rem;
+    color: #374151;
+    margin-bottom: 0.5rem;
+  }
+
+  .empty-content p {
+    color: #6b7280;
+    margin-bottom: 1.5rem;
+  }
+
+  .clear-filters-btn {
+    padding: 0.75rem 1.5rem;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+  }
+
+  .clear-filters-btn:hover {
+    background: #1e40af;
+  }
+
+  .loading-state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+  }
+
+  .loading-content {
+    text-align: center;
+  }
+
+  .loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #e5e7eb;
+    border-top: 4px solid var(--primary-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 1rem;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  .quick-view-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+  }
+
+  .modal-backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  .modal-content {
+    position: relative;
+    background: white;
+    border-radius: 1rem;
+    max-width: 800px;
+    max-height: 80vh;
+    overflow-y: auto;
+    margin: 1rem;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  }
+
+  .modal-close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: none;
+    border: none;
+    color: #6b7280;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 0.375rem;
+    transition: background-color 0.2s ease;
+    z-index: 10;
+  }
+
+  .modal-close:hover {
+    background: #f3f4f6;
+  }
+
+  .modal-body {
+    padding: 2rem;
+  }
+
+  .floating-actions {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    z-index: 100;
+  }
+
+  .fab {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem 1.5rem;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 2rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    transition: all 0.3s ease;
+    text-decoration: none;
+  }
+
+  .fab:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.2);
+  }
+
+  .fab-label {
+    font-size: 0.875rem;
+  }
+
+  @media (max-width: 1024px) {
+    .catalog-container {
+      grid-template-columns: 280px 1fr;
+      gap: 1.5rem;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .catalog-container {
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+
+    /* Show mobile filter toggle */
+    .mobile-filter-toggle {
+      display: block;
+    }
+
+    /* Hide desktop filters by default, show as mobile overlay */
+    .filters-sidebar {
+      position: fixed;
+      top: 0;
+      left: -100%;
+      width: 90%;
+      max-width: 400px;
+      height: 100vh;
+      background: white;
+      z-index: 999;
+      overflow-y: auto;
+      transition: left 0.3s ease;
+      padding: 2rem;
+      box-shadow: 4px 0 20px rgba(0, 0, 0, 0.15);
+    }
+
+    .filters-sidebar.mobile-open {
+      left: 0;
+    }
+
+    .filters-header-mobile {
+      display: flex;
+    }
+
+    .filters-overlay {
+      display: block;
+    }
+
+    .catalog-grid.view-grid {
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    }
+  }
+
+  @media (max-width: 480px) {
+    .catalog-container {
+      padding: 0 0.5rem;
+    }
+
+    .filters-sidebar {
+      width: 100%;
+      max-width: none;
+      padding: 1.5rem;
+    }
+
+    .catalog-grid.view-grid {
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+
+    .filter-toggle-btn {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+
+    .floating-actions {
+      bottom: 1rem;
+      right: 1rem;
+    }
+
+    .fab {
+      padding: 0.75rem 1rem;
+    }
+
+    .fab-label {
+      display: none;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .catalog-hero {
+      padding: 2rem 1rem 1.5rem;
+    }
+
+    .catalog-main {
+      padding: 1rem 0;
+    }
+
+    .modal-content {
+      margin: 0.5rem;
+      max-height: 90vh;
+    }
+
+    .modal-body {
+      padding: 1.5rem;
+    }
+  }
+</style>

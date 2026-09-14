@@ -1,0 +1,105 @@
+---
+import '../styles/global.css';
+import '../styles/blog.css';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import WhatsAppButton from '../components/WhatsAppButton.astro';
+const {
+  title = "Garcillantas - Expertos en Llantas y Servicios Automotrices",
+  description = "Somos líderes en servicios automotrices, especialistas en llantas y mantenimiento vehicular con la más alta tecnología y calidad.",
+  image = "/images/og-image.jpg",
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Primary Meta Tags -->
+    <title>{title}</title>
+    <meta name="title" content={title} />
+    <meta name="description" content={description} />
+    <meta name="keywords" content="llantas, servicios automotrices, mantenimiento vehicular, alineación, balanceo, frenos, suspensión" />
+    <meta name="robots" content="index, follow" />
+    <meta name="language" content="Spanish" />
+    <meta name="author" content="Garcillantas" />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://garcillantas.com.co/" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={image} />
+    <meta property="og:locale" content="es_CO" />
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content="https://garcillantas.com.co/" />
+    <meta property="twitter:title" content={title} />
+    <meta property="twitter:description" content={description} />
+    <meta property="twitter:image" content={image} />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <meta name="theme-color" content="#0D4BA0" />
+
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://garcillantas.com.co/" />
+
+    <meta name="generator" content={Astro.generator} />
+  </head>
+  <body>
+    <Header />
+    <main>
+      <slot />
+    </main>
+    <Footer />
+    <WhatsAppButton />
+  </body>
+</html>
+
+<style>
+  @font-face {
+    font-family: 'Eurostile';
+    src: url('/fonts/Eurostile-BoldOblique.woff2') format('woff2'),
+         url('/fonts/Eurostile-BoldOblique.woff') format('woff'),
+         url('/fonts/Eurostile-BoldOblique.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+  }
+  
+  :root {
+    --font-family: 'Poppins', system-ui, -apple-system, sans-serif;
+    --font-family-display: 'Eurostile', var(--font-family);
+  }
+
+  html,
+  body {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    color: var(--color-text);
+    font-family: var(--font-family);
+    overflow-x: hidden;
+    scroll-behavior: smooth;
+  }
+
+  main {
+    display: flex;
+    flex-direction: column;
+	z-index: 1;
+  }
+</style>

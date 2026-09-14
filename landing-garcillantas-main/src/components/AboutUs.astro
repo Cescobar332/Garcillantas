@@ -1,0 +1,548 @@
+---
+---
+
+<section class="about-us">
+  <div class="modal" id="imageModal">
+    <button class="close-button">&times;</button>
+    <button class="nav-button prev">&lt;</button>
+    <button class="nav-button next">&gt;</button>
+    <img src="" alt="" class="modal-image" />
+  </div>
+  <div class="about-container">
+    <h1>Nuestra Historia</h1>
+    <p class="subtitle">Más de 80 años rodando junto a Colombia</p>
+    <div class="timeline-indicator"></div>
+
+    <div class="timeline">
+      <div class="timeline-item">
+        <div class="timeline-content">
+          <img src="/images/timeline/fundacion.webp" alt="Fundación Garcillantas" class="timeline-image" />
+          <span class="year">1943</span>
+          <h3>El Nacimiento</h3>
+          <p>En Barranquilla, los hermanos García Gómez fundan GARCIA HERMANOS & CIA con un capital inicial de $5.000, dedicándose inicialmente a la comercialización de productos diversos y la trilla de café.</p>
+        </div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-content">
+          <img src="/images/timeline/goodyear.webp" alt="Distribuidor Goodyear" class="timeline-image" />
+          <span class="year">1955</span>
+          <h3>Distribuidor Oficial Goodyear</h3>
+          <p>La empresa marca un hito al convertirse en distribuidor oficial de Goodyear de Colombia S.A. en Bucaramanga, consolidando su presencia en el sector automotriz.</p>
+        </div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-content">
+          <img src="/images/timeline/almacen.webp" alt="Primer Almacén Moderno" class="timeline-image" />
+          <span class="year">1964</span>
+          <h3>Primer Almacén Moderno</h3>
+          <p>Inauguración del moderno almacén de llantas en la Avenida Quebradaseca con Cra. 13 en Bucaramanga, ofreciendo instalaciones diseñadas para una atención eficiente.</p>
+        </div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-content">
+          <img src="/images/timeline/garcillantas.webp" alt="Nace Garcillantas" class="timeline-image" />
+          <span class="year">1975</span>
+          <h3>Nace Garcillantas</h3>
+          <p>Bajo el liderazgo de Don Julián García Gómez, la empresa cambia su razón social a GARCILLANTAS LTDA, reafirmando su compromiso con la calidad y el servicio.</p>
+        </div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-content">
+          <img src="/images/timeline/presente.webp" alt="Presente Garcillantas" class="timeline-image" />
+          <span class="year">2023</span>
+          <h3>Líderes en el Mercado</h3>
+          <p>Con más de 80 años de experiencia, Garcillantas continúa siendo sinónimo de confianza y calidad en la distribución de llantas en Colombia.</p>
+        </div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-content">
+          <img src="/images/timeline/presente.webp" alt="Futuro Garcillantas" class="timeline-image" />
+          <span class="year">2025</span>
+          <h3>Innovación y Expansión</h3>
+          <p>Garcillantas se proyecta hacia el futuro con la renovación de sus instalaciones, implementación de tecnología de punta y expansión de servicios, reafirmando su compromiso con la excelencia y la satisfacción del cliente.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="mission-vision-section">
+      <div class="mission-vision-container">
+        <div class="mission-card">
+          <div class="card-header">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 16L4 8L20 8L12 16Z" fill="currentColor"/>
+              <path d="M12 3C16.9706 3 21 7.02944 21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3Z" stroke="currentColor" stroke-width="2"/>
+            </svg>
+            <h2>Nuestra Misión</h2>
+          </div>
+          <p>Somos una Empresa dedicada a la distribución y comercialización de llantas y servicios para el sector automotriz del Nor-Oriente Colombiano, suministrando satisfacción y seguridad a nuestros clientes al ofrecerles la mejor calidad en productos y servicios, alta tecnología en equipos y un personal amable, experto y capacitado que trabaja participativamente bajo la filosofía de mejoramiento continuo.</p>
+          <p>Buscamos permanentemente generar bienestar a nuestros empleados, seguridad y rentabilidad a nuestros accionistas y participación en el desarrollo regional.</p>
+        </div>
+
+        <div class="vision-card">
+          <div class="card-header">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 6L20 14H4L12 6Z" fill="currentColor"/>
+              <path d="M12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12C21 16.9706 16.9706 21 12 21Z" stroke="currentColor" stroke-width="2"/>
+            </svg>
+            <h2>Nuestra Visión</h2>
+          </div>
+          <p>Ser una Empresa exitosa en la distribución de llantas y servicios con presencia en el Nor-Oriente Colombiano, explorando permanentemente posibilidades de diversificación.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  </div>
+</section>
+
+<style>
+  .modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.9);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .modal.active {
+    display: flex;
+  }
+
+  .modal-image {
+    max-width: 90%;
+    max-height: 90vh;
+    object-fit: contain;
+  }
+
+  .close-button {
+    position: absolute;
+    top: 15px;
+    right: 25px;
+    font-size: 35px;
+    color: white;
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 5px;
+    z-index: 1001;
+  }
+
+  .nav-button {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    border: none;
+    padding: 15px;
+    cursor: pointer;
+    font-size: 24px;
+    transition: background-color 0.3s;
+    z-index: 1001;
+  }
+
+  .nav-button:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
+
+  .prev {
+    left: 15px;
+  }
+
+  .next {
+    right: 15px;
+  }
+
+  @media (max-width: 768px) {
+    .nav-button {
+      padding: 10px;
+      font-size: 18px;
+    }
+
+    .close-button {
+      font-size: 28px;
+      top: 10px;
+      right: 15px;
+    }
+  }
+
+  .about-us {
+    margin: 4em 0;
+    padding: var(--spacing-xl) 0;
+    background-color: var(--color-background);
+  }
+
+  .about-container {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    padding: 0 var(--spacing-md);
+    text-align: center;
+  }
+
+  h1 {
+    font-size: 3rem;
+    color: var(--secondary-color);
+    margin-bottom: var(--spacing-sm);
+    font-family: var(--font-family-display);
+  }
+
+  .subtitle {
+    color: var(--background-color);
+    font-size: 1.2rem;
+    margin-bottom: var(--spacing-xl);
+  }
+
+  .timeline {
+    position: relative;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 1rem 0;
+    text-align: left;
+  }
+
+  .timeline::before {
+    content: '';
+    position: absolute;
+    width: 2px;
+    background: var(--secondary-color);
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  .timeline-item {
+    padding: 2rem 0;
+    position: relative;
+    width: 50%;
+    left: 0;
+    opacity: 0;
+    transform: translateY(50px);
+    transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+    transition: all 0.3s ease;
+  }
+
+  .timeline-item.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .timeline-item:nth-child(even) {
+    left: 50%;
+  }
+
+  .timeline-content {
+    position: relative;
+    padding: 1.5rem;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    margin-right: 2rem;
+    transition: all 0.3s ease;
+    will-change: transform;
+  }
+
+  .timeline-content:hover {
+    transform: translateY(-10px);
+  }
+
+  .timeline-content::before {
+    content: '';
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    background: var(--primary-color);
+    border: 2px solid var(--secondary-color);
+    border-radius: 50%;
+    top: 50%;
+    transform: translateX(-18%);
+    right: -3rem;
+    transition: all 0.3s ease;
+  }
+
+  .timeline-item:nth-child(even) .timeline-content::before {
+    left: -39px;
+    right: auto;
+  }
+
+  .timeline-item:nth-child(even) .timeline-content {
+    margin-right: 0;
+    margin-left: 2rem;
+  }
+
+  .year {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    background: var(--primary-color);
+    color: white;
+    border-radius: 20px;
+    font-weight: bold;
+    margin-bottom: 1rem;
+  }
+
+  .timeline-content h3 {
+    color: var(--secondary-color);
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+    font-size: 2rem;
+    font-family: var(--font-family-display);
+  }
+
+  .values-section {
+    margin-top: var(--spacing-xl);
+    text-align: center;
+  }
+
+  .values-section h2 {
+    color: var(--primary-color);
+    font-size: 2rem;
+    margin-bottom: var(--spacing-lg);
+  }
+
+  .values-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: var(--spacing-lg);
+    margin-top: var(--spacing-lg);
+  }
+
+  .value-card {
+    background: white;
+    padding: var(--spacing-lg);
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease;
+  }
+
+  .timeline-image {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+    will-change: transform;
+  }
+
+  .timeline-image:hover {
+    transform: scale(1.05);
+  }
+
+  .mission-vision-section {
+    margin-top: 4rem;
+    padding: 2rem;
+    background-color: rgba(13, 75, 160, 0.45);
+    border-radius: 20px;
+  }
+
+  .mission-vision-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .mission-card,
+  .vision-card {
+    padding: 2.5rem;
+    background-color: rgba(255, 255, 255, 0.02);
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: transform 0.3s ease, border-color 0.3s ease;
+  }
+
+  .mission-card:hover,
+  .vision-card:hover {
+    transform: translateY(-5px);
+    border-color: rgba(255, 255, 255, 0.2);
+  }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .icon {
+    width: 40px;
+    height: 40px;
+    color: var(--secondary-color);
+  }
+
+  .mission-card h2,
+  .vision-card h2 {
+    color: var(--secondary-color);
+    margin: 0;
+    font-size: 2rem;
+    font-family: var(--font-family-display);
+  }
+
+  .mission-card p,
+  .vision-card p {
+    color: var(--background-color);
+    line-height: 1.8;
+    margin-bottom: 1.5rem;
+    font-size: 1.1rem;
+  }
+
+  .mission-card p:last-child,
+  .vision-card p:last-child {
+    margin-bottom: 0;
+  }
+
+  @media (max-width: 768px) {
+    .timeline::before {
+      left: 0;
+    }
+
+    .timeline-item {
+      width: 100%;
+      left: 0 !important;
+    }
+
+    .timeline-content {
+      margin: 0 0 0 2rem !important;
+    }
+
+    .timeline-content::before {
+      left: -39px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .timeline-content h3 {
+      font-size: 1.5rem;
+    }
+  }
+</style>
+
+<script>
+  function initializeTimeline() {
+    let currentImageIndex = 0;
+    let timelineImages = [];
+
+    const modal = document.getElementById('imageModal');
+    const modalImage = modal?.querySelector('.modal-image');
+    const closeButton = modal?.querySelector('.close-button');
+    const prevButton = modal?.querySelector('.prev');
+    const nextButton = modal?.querySelector('.next');
+
+    function openModal(image, index) {
+      if (!modal || !modalImage) return;
+      modal.classList.add('active');
+      modalImage.src = image.src;
+      modalImage.alt = image.alt;
+      currentImageIndex = index;
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal() {
+      if (!modal) return;
+      modal.classList.remove('active');
+      document.body.style.overflow = '';
+    }
+
+    function showNextImage() {
+      if (!modalImage || !timelineImages.length) return;
+      currentImageIndex = (currentImageIndex + 1) % timelineImages.length;
+      modalImage.src = timelineImages[currentImageIndex].src;
+      modalImage.alt = timelineImages[currentImageIndex].alt;
+    }
+
+    function showPrevImage() {
+      if (!modalImage || !timelineImages.length) return;
+      currentImageIndex = (currentImageIndex - 1 + timelineImages.length) % timelineImages.length;
+      modalImage.src = timelineImages[currentImageIndex].src;
+      modalImage.alt = timelineImages[currentImageIndex].alt;
+    }
+
+    // Cleanup previous event listeners
+    function cleanup() {
+      if (closeButton) closeButton.removeEventListener('click', closeModal);
+      if (prevButton) prevButton.removeEventListener('click', showPrevImage);
+      if (nextButton) nextButton.removeEventListener('click', showNextImage);
+      if (modal) modal.removeEventListener('click', handleModalClick);
+      document.removeEventListener('keydown', handleKeydown);
+      
+      // Cleanup intersection observer
+      if (window.timelineObserver) {
+        window.timelineObserver.disconnect();
+      }
+    }
+
+    function handleModalClick(e) {
+      if (e.target === modal) closeModal();
+    }
+
+    function handleKeydown(e) {
+      if (!modal?.classList.contains('active')) return;
+      
+      if (e.key === 'Escape') closeModal();
+      if (e.key === 'ArrowLeft') showPrevImage();
+      if (e.key === 'ArrowRight') showNextImage();
+    }
+
+    // Initialize modal functionality
+    timelineImages = Array.from(document.querySelectorAll('.timeline-image'));
+    
+    timelineImages.forEach((img, index) => {
+      img.style.cursor = 'pointer';
+      img.addEventListener('click', () => openModal(img, index));
+    });
+
+    if (closeButton) closeButton.addEventListener('click', closeModal);
+    if (prevButton) prevButton.addEventListener('click', showPrevImage);
+    if (nextButton) nextButton.addEventListener('click', showNextImage);
+    if (modal) modal.addEventListener('click', handleModalClick);
+    document.addEventListener('keydown', handleKeydown);
+
+    // Initialize intersection observer
+    const observerOptions = {
+      root: null,
+      rootMargin: '0px',
+      threshold: 0.2
+    };
+
+    const handleIntersect = (entries, observer) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    };
+
+    window.timelineObserver = new IntersectionObserver(handleIntersect, observerOptions);
+    const timelineItems = document.querySelectorAll('.timeline-item');
+    
+    timelineItems.forEach(item => {
+      window.timelineObserver.observe(item);
+    });
+
+    // Return cleanup function
+    return cleanup;
+  }
+
+  // Initialize on both DOMContentLoaded and astro:page-load
+  let cleanup = null;
+
+  function init() {
+    if (cleanup) cleanup();
+    cleanup = initializeTimeline();
+  }
+
+  document.addEventListener('astro:page-load', init);
+  document.addEventListener('DOMContentLoaded', init);
+</script>

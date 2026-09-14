@@ -1,0 +1,24 @@
+---
+import CountDown from '../components/CountDown.astro';
+import Layout from '../layouts/Layout.astro';
+import CTAForm from '../components/CTAForm.astro';
+import Hero from '../components/Hero.astro'
+import ServiceStations from '../components/ServiceStations.astro';
+import Brands from '../components/Brands.astro';
+import Services from '../components/Services.astro';
+import AdvisorBanner from '../components/AdvisorBanner.astro';
+import PayMethods from '@/components/PayMethods.astro';
+import Promotions from '@/components/Promotions.astro';
+import WhyUs from '@/components/WhyUs.astro';
+---
+<Layout>
+	<Hero/>
+	<Brands showTitle={false} />
+	<WhyUs/>
+	<Promotions />
+	<Services />
+	<ServiceStations/>
+	<PayMethods />
+	<Brands />
+	<AdvisorBanner />
+</Layout>

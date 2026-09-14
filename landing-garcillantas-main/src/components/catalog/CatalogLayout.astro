@@ -1,0 +1,535 @@
+---
+import CatalogHero from './CatalogHero.astro';
+import FilterToggle from './FilterToggle.astro';
+import CatalogFilters from '@/components/CatalogFilters.astro';
+import CatalogControls from '@/components/CatalogControls.astro';
+import ProductGrid from './ProductGrid.astro';
+import EmptyState from './EmptyState.astro';
+import LoadingState from './LoadingState.astro';
+import type { Product } from '@/lib/contentful';
+
+interface Props {
+  products: Product[];
+  allBrands: string[];
+  allRims: number[];
+  allWidths: number[];
+  allTypes: string[];
+  allSeasons: string[];
+  title?: string;
+  description?: string;
+  showHero?: boolean;
+  showStats?: boolean;
+}
+
+const { 
+  products,
+  allBrands,
+  allRims,
+  allWidths,
+  allTypes,
+  allSeasons,
+  title = "Catálogo de Productos",
+  description = "Encuentra la llanta perfecta para tu vehículo con nuestro sistema de búsqueda avanzada",
+  showHero = true,
+  showStats = true
+} = Astro.props;
+---
+
+<div class="catalog-layout">
+  {showHero && (
+    <CatalogHero 
+      products={products}
+      title={title}
+      description={description}
+      showStats={showStats}
+    />
+  )}
+
+  <main class="catalog-main">
+    <div class="catalog-container">
+      <!-- Mobile Filter Toggle -->
+      <FilterToggle />
+
+      <!-- Filters Sidebar -->
+      <aside class="filters-sidebar" id="filters-sidebar">
+        <div class="filters-header-mobile">
+          <h3>Filtrar productos</h3>
+          <button class="close-filters-btn" id="close-filters-btn" aria-label="Cerrar filtros">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+        
+        <CatalogFilters 
+          allBrands={allBrands}
+          allRims={allRims}
+          allWidths={allWidths}
+          allTypes={allTypes}
+          allSeasons={allSeasons}
+          totalProducts={products.length}
+        />
+      </aside>
+
+      <!-- Filters Overlay -->
+      <div class="filters-overlay" id="filters-overlay"></div>
+
+      <!-- Products Section -->
+      <section class="products-section">
+        <!-- Catalog Controls -->
+        <CatalogControls totalProducts={products.length} />
+
+        <!-- Loading State -->
+        <LoadingState type="products" showSkeleton={true} itemCount={8} />
+
+        <!-- Product Grid -->
+        <ProductGrid 
+          products={products}
+          viewMode="grid"
+          showQuickView={true}
+          lazyLoad={true}
+        />
+
+        <!-- Empty State -->
+        <EmptyState 
+          type="no-results"
+          showActions={true}
+        />
+      </section>
+    </div>
+  </main>
+</div>
+
+<script>
+class CatalogLayout {
+  constructor() {
+    this.filtersSidebar = document.getElementById('filters-sidebar');
+    this.filtersOverlay = document.getElementById('filters-overlay');
+    this.closeFiltersBtn = document.getElementById('close-filters-btn');
+    this.loadingState = document.getElementById('loading-state');
+    this.productGrid = document.getElementById('product-grid');
+    this.emptyState = document.getElementById('empty-state');
+    
+    this.isLoading = false;
+    this.hasResults = true;
+    
+    this.init();
+  }
+
+  init() {
+    this.setupEventListeners();
+    this.setupMobileFilters();
+    this.initializeStates();
+  }
+
+  setupEventListeners() {
+    // Mobile filter events
+    document.addEventListener('mobileFiltersToggle', this.openMobileFilters.bind(this));
+    
+    // Filter and search events
+    document.addEventListener('catalogSearch', this.handleSearch.bind(this));
+    document.addEventListener('filtersChanged', this.handleFiltersChanged.bind(this));
+    document.addEventListener('clearAllFilters', this.handleClearFilters.bind(this));
+    
+    // State management events
+    document.addEventListener('catalogFiltered', this.handleCatalogFiltered.bind(this));
+    document.addEventListener('retryLoadProducts', this.handleRetryLoad.bind(this));
+    document.addEventListener('browseAllProducts', this.handleBrowseAll.bind(this));
+    
+    // Responsive events
+    window.addEventListener('resize', this.handleResize.bind(this));
+  }
+
+  setupMobileFilters() {
+    // Close filters button
+    this.closeFiltersBtn?.addEventListener('click', this.closeMobileFilters.bind(this));
+    
+    // Overlay click
+    this.filtersOverlay?.addEventListener('click', this.closeMobileFilters.bind(this));
+    
+    // Escape key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && this.filtersSidebar?.classList.contains('mobile-open')) {
+        this.closeMobileFilters();
+      }
+    });
+  }
+
+  openMobileFilters() {
+    if (this.filtersSidebar && this.filtersOverlay) {
+      this.filtersSidebar.classList.add('mobile-open');
+      this.filtersOverlay.classList.add('active');
+      document.body.style.overflow = 'hidden';
+      
+      // Analytics
+      this.trackEvent('mobile_filters_opened');
+    }
+  }
+
+  closeMobileFilters() {
+    if (this.filtersSidebar && this.filtersOverlay) {
+      this.filtersSidebar.classList.remove('mobile-open');
+      this.filtersOverlay.classList.remove('active');
+      document.body.style.overflow = '';
+      
+      // Analytics
+      this.trackEvent('mobile_filters_closed');
+    }
+  }
+
+  handleSearch(e) {
+    this.showLoading('search', 'Buscando productos...');
+    
+    // Simulate search delay
+    setTimeout(() => {
+      this.hideLoading();
+      this.trackEvent('catalog_search', { query: e.detail.query });
+    }, 800);
+  }
+
+  handleFiltersChanged(e) {
+    this.showLoading('products', 'Aplicando filtros...');
+    
+    // Close mobile filters after applying
+    if (window.innerWidth <= 768) {
+      setTimeout(() => {
+        this.closeMobileFilters();
+      }, 300);
+    }
+    
+    setTimeout(() => {
+      this.hideLoading();
+      this.trackEvent('filters_applied', { filterCount: e.detail.activeFilters || 0 });
+    }, 600);
+  }
+
+  handleClearFilters() {
+    this.showLoading('products', 'Limpiando filtros...');
+    
+    setTimeout(() => {
+      this.hideLoading();
+      this.trackEvent('filters_cleared');
+    }, 400);
+  }
+
+  handleCatalogFiltered(e) {
+    const { visibleCount, totalCount } = e.detail;
+    this.hasResults = visibleCount > 0;
+    
+    this.updateStates();
+    this.trackEvent('catalog_filtered', { visibleCount, totalCount });
+  }
+
+  handleRetryLoad() {
+    this.showLoading('products', 'Reintentando cargar productos...');
+    
+    // Simulate retry
+    setTimeout(() => {
+      this.hideLoading();
+      this.trackEvent('retry_load_products');
+    }, 1000);
+  }
+
+  handleBrowseAll() {
+    // Clear all filters and show all products
+    document.dispatchEvent(new CustomEvent('clearAllFilters'));
+    this.trackEvent('browse_all_products');
+  }
+
+  handleResize() {
+    // Close mobile filters on desktop resize
+    if (window.innerWidth > 768 && this.filtersSidebar?.classList.contains('mobile-open')) {
+      this.closeMobileFilters();
+    }
+  }
+
+  showLoading(type = 'products', message = null) {
+    this.isLoading = true;
+    
+    if (this.loadingState) {
+      this.loadingState.style.display = 'block';
+      this.loadingState.className = `loading-state loading-${type}`;
+    }
+    
+    if (this.productGrid) {
+      this.productGrid.style.display = 'none';
+    }
+    
+    if (this.emptyState) {
+      this.emptyState.style.display = 'none';
+    }
+    
+    // Update loading message if provided
+    if (message && window.loadingState) {
+      window.loadingState.updateMessage(message);
+    }
+  }
+
+  hideLoading() {
+    this.isLoading = false;
+    
+    if (this.loadingState) {
+      this.loadingState.style.display = 'none';
+    }
+    
+    this.updateStates();
+  }
+
+  updateStates() {
+    if (this.isLoading) return;
+    
+    if (this.hasResults) {
+      // Show products
+      if (this.productGrid) {
+        this.productGrid.style.display = 'block';
+      }
+      if (this.emptyState) {
+        this.emptyState.style.display = 'none';
+      }
+    } else {
+      // Show empty state
+      if (this.productGrid) {
+        this.productGrid.style.display = 'none';
+      }
+      if (this.emptyState) {
+        this.emptyState.style.display = 'flex';
+      }
+    }
+  }
+
+  initializeStates() {
+    // Initial state setup
+    this.hideLoading();
+    this.updateStates();
+    
+    // Hide loading state initially
+    if (this.loadingState) {
+      this.loadingState.style.display = 'none';
+    }
+  }
+
+  trackEvent(eventName, parameters = {}) {
+    // Analytics tracking
+    if (typeof gtag !== 'undefined') {
+      gtag('event', eventName, {
+        event_category: 'catalog',
+        ...parameters
+      });
+    }
+    
+    // Console log for development
+    console.log(`Catalog Event: ${eventName}`, parameters);
+  }
+}
+
+// Initialize when DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+  window.catalogLayout = new CatalogLayout();
+});
+</script>
+
+<style>
+  .catalog-layout {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  }
+
+  .catalog-main {
+    padding: 2rem 0;
+  }
+
+  .catalog-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1rem;
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 2rem;
+    align-items: start;
+    position: relative;
+  }
+
+  /* Filters Sidebar */
+  .filters-sidebar {
+    position: sticky;
+    top: 2rem;
+    background: white;
+    border-radius: 1rem;
+    padding: 0;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    overflow: visible;
+    z-index: 10;
+  }
+
+  .filters-header-mobile {
+    display: none;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding: 1.5rem 1.5rem 0;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  .filters-header-mobile h3 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #111827;
+    margin: 0;
+  }
+
+  .close-filters-btn {
+    background: none;
+    border: none;
+    color: #6b7280;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 0.375rem;
+    transition: all 0.2s ease;
+  }
+
+  .close-filters-btn:hover {
+    background: #f3f4f6;
+    color: #374151;
+  }
+
+  /* Filters Overlay */
+  .filters-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 998;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .filters-overlay.active {
+    opacity: 1;
+  }
+
+  /* Products Section */
+  .products-section {
+    min-height: 600px;
+    position: relative;
+  }
+
+  /* Responsive Design */
+  @media (max-width: 1024px) {
+    .catalog-container {
+      grid-template-columns: 280px 1fr;
+      gap: 1.5rem;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .catalog-main {
+      padding: 1rem 0;
+    }
+
+    .catalog-container {
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+
+    /* Hide desktop filters by default, show as mobile overlay */
+    .filters-sidebar {
+      position: fixed;
+      top: 0;
+      left: -100%;
+      width: 90%;
+      max-width: 400px;
+      height: 100vh;
+      background: white;
+      z-index: 999;
+      overflow-y: auto;
+      transition: left 0.3s ease;
+      padding: 0;
+      box-shadow: 4px 0 20px rgba(0, 0, 0, 0.15);
+    }
+
+    .filters-sidebar.mobile-open {
+      left: 0;
+    }
+
+    .filters-header-mobile {
+      display: flex;
+      padding-bottom: 1rem;
+    }
+
+    .filters-overlay {
+      display: block;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .catalog-container {
+      padding: 0 0.5rem;
+    }
+
+    .filters-sidebar {
+      width: 100%;
+      max-width: none;
+    }
+  }
+
+  /* Enhanced animations */
+  .filters-sidebar {
+    animation: slideInLeft 0.3s ease-out;
+  }
+
+  .products-section {
+    animation: fadeInUp 0.4s ease-out;
+  }
+
+  @keyframes slideInLeft {
+    from {
+      opacity: 0;
+      transform: translateX(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Focus management */
+  .filters-sidebar:focus-within {
+    box-shadow: 0 4px 20px rgba(13, 75, 160, 0.15);
+  }
+
+  /* High contrast mode support */
+  @media (prefers-contrast: high) {
+    .filters-sidebar {
+      border: 2px solid;
+    }
+    
+    .filters-overlay {
+      background: rgba(0, 0, 0, 0.8);
+    }
+  }
+
+  /* Reduced motion support */
+  @media (prefers-reduced-motion: reduce) {
+    .filters-sidebar,
+    .products-section,
+    .filters-overlay {
+      animation: none;
+      transition: none;
+    }
+  }
+</style>
